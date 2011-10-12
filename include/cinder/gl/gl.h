@@ -86,13 +86,15 @@ bool isExtensionAvailable( const std::string &extName );
 //! Clears the OpenGL color buffer using \a color and optionally clears the depth buffer when \a clearDepthBuffer
 void clear( const ColorA &color = ColorA::black(), bool clearDepthBuffer = true );
 
-#if ! defined( CINDER_GLES2 )
 //! Sets the \c MODELVIEW and \c PROJECTION matrices to reflect the values of \a cam. Leaves the \c MatrixMode as \c MODELVIEW.
 void setMatrices( const Camera &cam );
 //! Sets the \c MODELVIEW matrix to reflect the values of \a cam. Leaves the \c MatrixMode as \c MODELVIEW.
 void setModelView( const Camera &cam );
 //! Sets the \c PROJECTION matrix to reflect the values of \a cam. Leaves the \c MatrixMode as \c PROJECTION.
 void setProjection( const Camera &cam );
+
+void setProjection( const Matrix44f &proj );
+
 //! Pushes the \c MODELVIEW matrix onto its stack, preserving the current values. Leaves the \c MatrixMode as \c MODELVIEW.
 void pushModelView();
 //! Pops the \c MODELVIEW matrix off of its stack, restoring the values saved with the previous push. Leaves the \c MatrixMode as \c MODELVIEW.
@@ -126,11 +128,9 @@ inline void setMatricesWindow( const Vec2i &screenSize, bool originUpperLeft = t
 
 //! Returns the current OpenGL Viewport as an Area
 Area getViewport();
-#endif
 //! Sets the current OpenGL Viewport to \a area
 void setViewport( const Area &area );
 
-#if ! defined( CINDER_GLES2 )
 //! Produces a translation by \a pos in the current matrix.
 void translate( const Vec2f &pos );
 //! Produces a translation by \a x and \a y in the current matrix.
@@ -155,7 +155,6 @@ void rotate( const Vec3f &xyz );
 void rotate( const Quatf &quat );
 //! Produces a 2D rotation, the equivalent of a rotation around the Z axis by \a degrees.
 inline void rotate( float degrees ) { rotate( Vec3f( 0, 0, degrees ) ); }
-#endif
 
 #if ! defined( CINDER_GLES )
 //! Used between calls to \c glBegin and \c glEnd, appends a vertex to the current primitive.
@@ -168,7 +167,6 @@ inline void vertex( const Vec3f &v ) { glVertex3fv( &v.x ); }
 inline void vertex( float x, float y, float z ) { glVertex3f( x, y, z ); }
 #endif // ! defined( CINDER_GLES )
 
-#if ! defined( CINDER_GLES2 )
 //! Sets the current color and the alpha value to 1.0
 inline void color( float r, float g, float b ) { glColor4f( r, g, b, 1.0f ); }
 //! Sets the current color and alpha value
@@ -181,7 +179,6 @@ inline void color( const ColorA8u &c ) { glColor4ub( c.r, c.g, c.b, c.a ); }
 inline void color( const Color &c ) { glColor4f( c.r, c.g, c.b, 1.0f ); }
 //! Sets the current color and alpha value
 inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
-#endif // ! defined( CINDER_GLES2 )
 
 //! Enables the OpenGL State \a state. Equivalent to calling to glEnable( state );
 inline void enable( GLenum state ) { glEnable( state ); }
@@ -297,8 +294,6 @@ void drawString( const std::string &str, const Vec2f &pos, const ColorA &color =
 void drawStringCentered( const std::string &str, const Vec2f &pos, const ColorA &color = ColorA( 1, 1, 1, 1 ), Font font = Font() );
 //! Draws a right-justified string \a str with the center of its  located at \a pos. Optional \a font and \a color affect the style
 void drawStringRight( const std::string &str, const Vec2f &pos, const ColorA &color = ColorA( 1, 1, 1, 1 ), Font font = Font() );
-
-#endif // ! defined( CINDER_GLES2 )
 
 //! Convenience class designed to push and pop the currently bound texture for a given texture unit
 struct SaveTextureBindState {
