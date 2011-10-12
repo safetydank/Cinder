@@ -760,43 +760,6 @@ void GlesAttr::draw( const Texture &texture, const Area &srcArea, const Rectf &d
     glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 }
 
-class CinderProgES2 : public GlslProg
-{
-public:
-    static const char* verts; 
-    static const char* frags; 
-
-    CinderProgES2() : GlslProg(verts, frags) 
-    { }
-};
-
-static shared_ptr<GLES2Context> sContext;
-
-GLES2ContextRef setGLES2Context(GLES2ContextRef context)
-{
-    if (context) {
-        sContext = context;
-    }
-    else {
-        //  Use default context
-        sContext = GLES2Context::create();
-    }
-
-    return sContext;
-}
-
-GLES2ContextRef getGLES2Context()
-{
-    return sContext;
-}
-
-void releaseGLES2Context()
-{
-    if (sContext) {
-        sContext = GLES2ContextRef();
-    }
-}
-
 void drawLine( const Vec2f &start, const Vec2f &end )
 {
     if (sContext) sContext->attr().drawLine(start, end);

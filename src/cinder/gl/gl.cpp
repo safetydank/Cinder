@@ -225,130 +225,6 @@ void clear( const ColorA &color, bool clearDepthBuffer )
 		glClear( GL_COLOR_BUFFER_BIT );
 }
 
-#if ! defined( CINDER_GLES2 )
-void setModelView( const Camera &cam )
-{
-	glMatrixMode( GL_MODELVIEW );
-	glLoadMatrixf( cam.getModelViewMatrix().m );
-}
-
-void setProjection( const Camera &cam )
-{
-	glMatrixMode( GL_PROJECTION );
-	glLoadMatrixf( cam.getProjectionMatrix().m );
-}
-
-void setMatrices( const Camera &cam )
-{
-	setProjection( cam );
-	setModelView( cam );
-}
-
-void pushModelView()
-{
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-}
-
-void popModelView()
-{
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-}
-
-void pushModelView( const Camera &cam )
-{
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-	glLoadMatrixf( cam.getModelViewMatrix().m );
-}
-
-void pushProjection( const Camera &cam )
-{
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glLoadMatrixf( cam.getProjectionMatrix().m );
-}
-
-void pushMatrices()
-{
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();	
-}
-
-void popMatrices()
-{
-	glMatrixMode( GL_PROJECTION );
-	glPopMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-}
-
-void multModelView( const Matrix44f &mtx )
-{
-	glMatrixMode( GL_MODELVIEW );
-	glMultMatrixf( mtx );
-}
-
-void multProjection( const Matrix44f &mtx )
-{
-	glMatrixMode( GL_PROJECTION );
-	glMultMatrixf( mtx );
-}
-
-Matrix44f getModelView()
-{
-	Matrix44f result;
-	glGetFloatv( GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
-	return result;
-}
-
-Matrix44f getProjection()
-{
-	Matrix44f result;
-	glGetFloatv( GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
-	return result;
-}
-
-void setMatricesWindowPersp( int screenWidth, int screenHeight, float fovDegrees, float nearPlane, float farPlane, bool originUpperLeft )
-{
-	CameraPersp cam( screenWidth, screenHeight, fovDegrees, nearPlane, farPlane );
-
-	glMatrixMode( GL_PROJECTION );
-	glLoadMatrixf( cam.getProjectionMatrix().m );
-
-	glMatrixMode( GL_MODELVIEW );
-	glLoadMatrixf( cam.getModelViewMatrix().m );
-	if( originUpperLeft ) {
-		glScalef( 1.0f, -1.0f, 1.0f );           // invert Y axis so increasing Y goes down.
-		glTranslatef( 0.0f, (float)-screenHeight, 0.0f );       // shift origin up to upper-left corner.
-		glViewport( 0, 0, screenWidth, screenHeight );
-	}
-}
-
-void setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft )
-{
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-#if defined( CINDER_GLES1 )
-	if( originUpperLeft )
-		glOrthof( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
-	else
-		glOrthof( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
-#else	
-	if( originUpperLeft )
-		glOrtho( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
-	else
-		glOrtho( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
-#endif
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glViewport( 0, 0, screenWidth, screenHeight );
-}
-#endif // ! defined( CINDER_GLES2 )
-
 Area getViewport()
 {
 	GLint params[4];
@@ -361,40 +237,6 @@ void setViewport( const Area &area )
 {
 	glViewport( area.x1, area.y1, ( area.x2 - area.x1 ), ( area.y2 - area.y1 ) );
 }
-
-#if ! defined( CINDER_GLES2 )
-void translate( const Vec2f &pos )
-{
-	glTranslatef( pos.x, pos.y, 0 );
-}
-
-void translate( const Vec3f &pos )
-{
-	glTranslatef( pos.x, pos.y, pos.z );
-}
-
-void scale( const Vec3f &scale )
-{
-	glScalef( scale.x, scale.y, scale.z );
-}
-
-void rotate( const Vec3f &xyz )
-{
-	glRotatef( xyz.x, 1.0f, 0.0f, 0.0f );
-	glRotatef( xyz.y, 0.0f, 1.0f, 0.0f );
-	glRotatef( xyz.z, 0.0f, 0.0f, 1.0f );
-}
-
-void rotate( const Quatf &quat )
-{
-	Vec3f axis;
-	float angle;
-	quat.getAxisAngle( &axis, &angle );
-	if( math<float>::abs( angle ) > EPSILON_VALUE )
-		glRotatef( toDegrees( angle ), axis.x, axis.y, axis.z );
-}
-
-#endif // ! defined( CINDER_GLES2 )
 
 void enableAlphaBlending( bool premultiplied )
 {
@@ -415,33 +257,6 @@ void enableAdditiveBlending()
 	glEnable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );	
 }
-
-#if ! defined( CINDER_GLES2 )
-
-void enableAlphaTest( float value, int func )
-{
-	glEnable( GL_ALPHA_TEST );
-	glAlphaFunc( func, value );
-}
-
-void disableAlphaTest()
-{
-	glDisable( GL_ALPHA_TEST );
-}
-
-#if ! defined( CINDER_GLES1 )
-void enableWireframe()
-{
-	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-}
-
-void disableWireframe()
-{
-	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-}
-#endif
-
-#endif
 
 void disableDepthRead()
 {

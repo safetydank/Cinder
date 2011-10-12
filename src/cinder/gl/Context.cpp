@@ -1,21 +1,213 @@
-#include "cinder/gl/gles2.h"
+#if ! defined( CINDER_GLES2 )
 
-#include "cinder/gl/GlslProg.h"
-#include "cinder/gl/Vbo.h"
-#include "cinder/CinderMath.h"
-#include "cinder/Vector.h"
-#include "cinder/Camera.h"
-#include "cinder/TriMesh.h"
-#include "cinder/Sphere.h"
-#include "cinder/gl/Texture.h"
-#include "cinder/Text.h"
-#include "cinder/PolyLine.h"
-#include "cinder/Path2d.h"
-#include "cinder/Shape2d.h"
+void GLContext::initialize()
+{
+    //  Do nothing 
+}
 
-using std::shared_ptr;
+void setModelView( const Camera &cam )
+{
+	glMatrixMode( GL_MODELVIEW );
+	glLoadMatrixf( cam.getModelViewMatrix().m );
+}
 
-namespace cinder { namespace gl {
+void setProjection( const Camera &cam )
+{
+	glMatrixMode( GL_PROJECTION );
+	glLoadMatrixf( cam.getProjectionMatrix().m );
+}
+
+void setMatrices( const Camera &cam )
+{
+	setProjection( cam );
+	setModelView( cam );
+}
+
+void pushModelView()
+{
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+}
+
+void popModelView()
+{
+	glMatrixMode( GL_MODELVIEW );
+	glPopMatrix();
+}
+
+void pushModelView( const Camera &cam )
+{
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+	glLoadMatrixf( cam.getModelViewMatrix().m );
+}
+
+void pushProjection( const Camera &cam )
+{
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadMatrixf( cam.getProjectionMatrix().m );
+}
+
+void pushMatrices()
+{
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();	
+}
+
+void popMatrices()
+{
+	glMatrixMode( GL_PROJECTION );
+	glPopMatrix();
+	glMatrixMode( GL_MODELVIEW );
+	glPopMatrix();
+}
+
+void multModelView( const Matrix44f &mtx )
+{
+	glMatrixMode( GL_MODELVIEW );
+	glMultMatrixf( mtx );
+}
+
+void multProjection( const Matrix44f &mtx )
+{
+	glMatrixMode( GL_PROJECTION );
+	glMultMatrixf( mtx );
+}
+
+Matrix44f getModelView()
+{
+	Matrix44f result;
+	glGetFloatv( GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
+	return result;
+}
+
+Matrix44f getProjection()
+{
+	Matrix44f result;
+	glGetFloatv( GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
+	return result;
+}
+
+void setMatricesWindowPersp( int screenWidth, int screenHeight, float fovDegrees, float nearPlane, float farPlane, bool originUpperLeft )
+{
+	CameraPersp cam( screenWidth, screenHeight, fovDegrees, nearPlane, farPlane );
+
+	glMatrixMode( GL_PROJECTION );
+	glLoadMatrixf( cam.getProjectionMatrix().m );
+
+	glMatrixMode( GL_MODELVIEW );
+	glLoadMatrixf( cam.getModelViewMatrix().m );
+	if( originUpperLeft ) {
+		glScalef( 1.0f, -1.0f, 1.0f );           // invert Y axis so increasing Y goes down.
+		glTranslatef( 0.0f, (float)-screenHeight, 0.0f );       // shift origin up to upper-left corner.
+		glViewport( 0, 0, screenWidth, screenHeight );
+	}
+}
+
+void setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft )
+{
+	glMatrixMode( GL_PROJECTION );
+	glLoadIdentity();
+#if defined( CINDER_GLES1 )
+	if( originUpperLeft )
+		glOrthof( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
+	else
+		glOrthof( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
+#else	
+	if( originUpperLeft )
+		glOrtho( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
+	else
+		glOrtho( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
+#endif
+	glMatrixMode( GL_MODELVIEW );
+	glLoadIdentity();
+	glViewport( 0, 0, screenWidth, screenHeight );
+}
+
+void translate( const Vec2f &pos )
+{
+	glTranslatef( pos.x, pos.y, 0 );
+}
+
+void translate( const Vec3f &pos )
+{
+	glTranslatef( pos.x, pos.y, pos.z );
+}
+
+void scale( const Vec3f &scale )
+{
+	glScalef( scale.x, scale.y, scale.z );
+}
+
+void rotate( const Vec3f &xyz )
+{
+	glRotatef( xyz.x, 1.0f, 0.0f, 0.0f );
+	glRotatef( xyz.y, 0.0f, 1.0f, 0.0f );
+	glRotatef( xyz.z, 0.0f, 0.0f, 1.0f );
+}
+
+void rotate( const Quatf &quat )
+{
+	Vec3f axis;
+	float angle;
+	quat.getAxisAngle( &axis, &angle );
+	if( math<float>::abs( angle ) > EPSILON_VALUE )
+		glRotatef( toDegrees( angle ), axis.x, axis.y, axis.z );
+}
+
+void enableAlphaTest( float value, int func )
+{
+	glEnable( GL_ALPHA_TEST );
+	glAlphaFunc( func, value );
+}
+
+void disableAlphaTest()
+{
+	glDisable( GL_ALPHA_TEST );
+}
+
+#if ! defined( CINDER_GLES1 )
+void enableWireframe()
+{
+	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+}
+
+void disableWireframe()
+{
+	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+}
+#endif
+
+#endif // ! defined( CINDER_GLES2 )
+
+#if defined( CINDER_GLES2 )
+
+//  Static members
+
+static GLES2ContextRef sContext;
+
+void initGLES2()
+{
+    sContext = GLES2ContextRef(new GLES2Context());
+}
+
+void freeGLES2()
+{
+    sContext = GLES2ContextRef();
+}
+
+void bindGLES2()
+{
+    sContext->bind();
+}
+
+void unbindGLES2()
+{
+    sContext->unbind();
+}
 
 class CinderProgES2 : public GlslProg
 {
@@ -73,15 +265,15 @@ const char* CinderProgES2::frags =
         "    }\n"
         "}\n";
 
-GlesContextRef GlesContext::create()
-{
-    return GlesContextRef(new GlesContext());
-}
-
-GlesContextRef GlesContext::create(GlslProg& shader, GlesAttr& attr)
-{
-    return GlesContextRef(new GlesContext(shader, attr));
-}
+// GlesContextRef GlesContext::create()
+// {
+//     return GlesContextRef(new GlesContext());
+// }
+// 
+// GlesContextRef GlesContext::create(GlslProg& shader, GlesAttr& attr)
+// {
+//     return GlesContextRef(new GlesContext(shader, attr));
+// }
 
 GlesContext::GlesContext()
 {
@@ -396,8 +588,6 @@ void GlesContext::updateUniforms()
     mProjDirty = mModelViewDirty = mColorDirty = mTextureDirty = mActiveAttrsDirty = false;
 }
 
-static shared_ptr<GlesContext> sContext;
-
 GlesContextRef setGlesContext(GlesContextRef context)
 {
     if (context) {
@@ -423,340 +613,5 @@ void releaseGlesContext()
     }
 }
 
-void drawLine( const Vec2f &start, const Vec2f &end )
-{
-    if (sContext) sContext->attr().drawLine(start, end);
-}
-
-void drawLine( const Vec3f &start, const Vec3f &end )
-{
-    if (sContext) sContext->attr().drawLine(start, end);
-}
-
-void drawCube( const Vec3f &center, const Vec3f &size )
-{
-    if (sContext) sContext->attr().drawCube(center, size);
-}
-
-void drawColorCube( const Vec3f &center, const Vec3f &size )
-{
-    if (sContext) sContext->attr().drawColorCube(center, size);
-}
-
-void drawStrokedCube( const Vec3f &center, const Vec3f &size )
-{
-    if (sContext) sContext->attr().drawStrokedCube(center, size);
-}
-
-void drawSphere( const Vec3f &center, float radius, int segments )
-{
-    if (sContext) sContext->attr().drawSphere(center, radius, segments);
-}
-
-void draw( const class Sphere &sphere, int segments )
-{
-    if (sContext) sContext->attr().draw(sphere, segments);
-}
-
-void drawSolidCircle( const Vec2f &center, float radius, int numSegments )
-{
-    if (sContext) sContext->attr().drawSolidCircle(center, radius, numSegments);
-}
-
-void drawStrokedCircle( const Vec2f &center, float radius, int numSegments )
-{
-    if (sContext) sContext->attr().drawStrokedCircle(center, radius, numSegments);
-}
-
-void drawSolidRect( const Rectf &rect, bool textureRectangle )
-{
-    if (sContext) sContext->attr().drawSolidRect(rect, textureRectangle);
-}
-
-void drawStrokedRect( const Rectf &rect )
-{
-    if (sContext) sContext->attr().drawStrokedRect(rect);
-}
-
-void drawCoordinateFrame( float axisLength, float headLength, float headRadius )
-{
-    if (sContext) sContext->attr().drawCoordinateFrame(axisLength, headLength, headRadius);
-}
-
-void drawVector( const Vec3f &start, const Vec3f &end, float headLength, float headRadius )
-{
-    if (sContext) sContext->attr().drawVector(start, end, headLength, headRadius);
-}
-
-void drawFrustum( const Camera &cam )
-{
-    if (sContext) sContext->attr().drawFrustum(cam);
-}
-
-void drawTorus( float outterRadius, float innerRadius, int longitudeSegments, int latitudeSegments )
-{
-    if (sContext) sContext->attr().drawTorus(outterRadius, innerRadius, longitudeSegments, latitudeSegments);
-}
-
-void drawCylinder( float baseRadius, float topRadius, float height, int slices, int stacks )
-{
-    if (sContext) sContext->attr().drawCylinder(baseRadius, topRadius, height, slices, stacks);
-}
-
-// void draw( const class PolyLine<Vec2f> &polyLine )
-// {
-// }
-//
-
-void draw( const class PolyLine<Vec3f> &polyLine )
-{
-    if (sContext) sContext->attr().draw(polyLine);
-}
-
-void draw( const class Path2d &path2d, float approximationScale )
-{
-    if (sContext) sContext->attr().draw(path2d, approximationScale);
-}
-
-void draw( const class Shape2d &shape2d, float approximationScale )
-{
-    if (sContext) sContext->attr().draw(shape2d, approximationScale);
-}
-
-// void drawSolid( const class Path2d &path2d, float approximationScale = 1.0f )
-// {
-// }
-//
-
-void draw( const TriMesh &mesh )
-{
-    if (sContext) sContext->attr().draw(mesh);
-}
-
-// void drawRange( const TriMesh &mesh, size_t startTriangle, size_t triangleCount )
-// {
-//     if (sContext) sContext->attr().draw(mesh, startTriangle, triangleCount);
-// }
-
-void draw( const VboMesh &vbo )
-{
-    if (sContext) sContext->attr().draw(vbo);
-}
-
-void drawRange( const VboMesh &vbo, size_t startIndex, size_t indexCount, int vertexStart, int vertexEnd )
-{
-    if (sContext) sContext->attr().drawRange(vbo, startIndex, indexCount, vertexStart, vertexEnd);
-}
-
-void drawArrays( const VboMesh &vbo, GLint first, GLsizei count )
-{
-    if (sContext) sContext->attr().drawArrays(vbo, first, count);
-}
-
-void drawBillboard( const Vec3f &pos, const Vec2f &scale, float rotationDegrees, const Vec3f &bbRight, const Vec3f &bbUp )
-{
-    if (sContext) sContext->attr().drawBillboard(pos, scale, rotationDegrees, bbRight, bbUp);
-}
-
-void draw( const Texture &texture )
-{
-    if (sContext) sContext->attr().draw(texture);
-}
-
-void draw( const Texture &texture, const Vec2f &pos )
-{
-    if (sContext) sContext->attr().draw(texture, pos);
-}
-
-void draw( const Texture &texture, const Rectf &rect )
-{
-    if (sContext) sContext->attr().draw(texture, rect);
-}
-
-void draw( const Texture &texture, const Area &srcArea, const Rectf &destRect )
-{
-    if (sContext) sContext->attr().draw(texture, srcArea, destRect);
-}
-
-void setMatrices( const Camera &cam )
-{
-    if (sContext) sContext->setMatrices(cam);
-}
-
-void setModelView( const Camera &cam )
-{
-    if (sContext) sContext->setModelView(cam);
-}
-
-void setProjection( const Camera &cam )
-{
-    if (sContext) sContext->setProjection(cam);
-}
-
-void setProjection( const Matrix44f &proj )
-{
-    if (sContext) sContext->setProjection(proj);
-}
-
-
-void pushModelView()
-{
-    if (sContext) sContext->pushModelView();
-}
-
-void popModelView()
-{
-    if (sContext) sContext->popModelView();
-}
-
-void pushModelView( const Camera &cam )
-{
-    if (sContext) sContext->pushModelView(cam);
-}
-
-void pushProjection( const Camera &cam )
-{
-    if (sContext) sContext->pushProjection(cam);
-}
-
-void pushMatrices()
-{
-    if (sContext) sContext->pushMatrices();
-}
-
-void popMatrices()
-{
-    if (sContext) sContext->popMatrices();
-}
-
-void multModelView( const Matrix44f &mtx )
-{
-    if (sContext) sContext->multModelView(mtx);
-}
-
-void multProjection( const Matrix44f &mtx )
-{
-    if (sContext) sContext->multProjection(mtx);
-}
-
-Matrix44f getModelView()
-{
-    if (sContext) sContext->getModelView();
-}
-
-Matrix44f getProjection()
-{
-    if (sContext) sContext->getProjection();
-}
-
-void setMatricesWindowPersp( int screenWidth, int screenHeight, float fovDegrees, float nearPlane, float farPlane, bool originUpperLeft )
-{
-    if (sContext) sContext->setMatricesWindowPersp(screenWidth, screenHeight, fovDegrees, nearPlane, farPlane, originUpperLeft);
-}
-
-void setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft )
-{
-    if (sContext) sContext->setMatricesWindow(screenWidth, screenHeight, originUpperLeft);
-}
-
-void translate( const Vec2f &pos )
-{
-    if (sContext) sContext->translate(pos);
-}
-
-void translate( const Vec3f &pos )
-{
-    if (sContext) sContext->translate(pos);
-}
-
-void scale( const Vec3f &scl )
-{
-    if (sContext) sContext->scale(scl);
-}
-
-void rotate( const Vec3f &xyz )
-{
-    if (sContext) sContext->rotate(xyz);
-}
-
-void rotate( const Quatf &quat )
-{
-    if (sContext) sContext->rotate(quat);
-}
-
-void color( float r, float g, float b )
-{
-    if (sContext) sContext->color(r, g, b);
-}
-
-void color( float r, float g, float b, float a )
-{
-    if (sContext) sContext->color(r, g, b, a);
-}
-
-// void color( const Color8u &c );
-// void color( const ColorA8u &c );
-void color( const Color &c )
-{
-    if (sContext) sContext->color(c);
-}
-
-void color( const ColorA &c )
-{
-    if (sContext) sContext->color(c);
-}
-
-ClientBoolState::ClientBoolState( GLint target )
-{
-    GlesContextRef context = getGlesContext();
-
-    //  Does nothing if there's no context set
-    if (context) {
-        init( getGlesContext()->attr(), target );
-    }
-}
-
-ClientBoolState::ClientBoolState( GlesAttr& attr, GLint target )
-{
-    init( attr, target);
-}
-
-void ClientBoolState::init(GlesAttr& attr, GLint target )
-{
-    switch( target ) {
-    case GL_VERTEX_ARRAY:
-        mTarget = attr.mVertex;
-        break;
-    case GL_COLOR_ARRAY:
-        mTarget = attr.mColor;
-        break;
-    case GL_TEXTURE_COORD_ARRAY:
-        mTarget = attr.mTexCoord;
-        break;
-    case GL_NORMAL_ARRAY:
-        mTarget = attr.mNormal;
-        break;
-    default:
-        mTarget = 0;
-    }
-
-    if (mTarget)
-        glGetVertexAttribiv(attr.mVertex, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &mOldValue);
-}
-
-ClientBoolState::~ClientBoolState()
-{
-    if (!mTarget)
-        return;
-
-    if (mOldValue) {
-        glEnableVertexAttribArray(mTarget);
-    }
-    else {
-        glDisableVertexAttribArray(mTarget);
-    }
-}
-
-} }
-
+#endif // defined( CINDER_GLES2 )
 
