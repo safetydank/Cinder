@@ -68,6 +68,37 @@ See $NDK/docs/IMPORT-MODULE.html for more details of how to use
 NDK_MODULE_PATH.
 
 
+Orientation
+-----------
+
+To handle orientation changes, add "orientation" to configChanges in 
+AndroidManifest.xml.  A change in orientation will trigger onResize() with
+the new viewport dimensions.  The actual orientation can be checked inside
+orientation by calling app->getOrientation().
+
+To use fixed orientation, remove "orientation" from configChanges and add
+android:orientation="landscape" to the activity tag.
+
+Note that a fixed orientation app may be paused/restarted multiple times on
+resumption.  It is important that you handle resume() correctly and quickly.
+It is advisable to defer any heavy resource loading until the app starts its
+update/draw cycle.
+
+
+Activity lifecycle
+------------------
+
+OnStart  -> AppAndroid::setup()
+OnResume -> AppAndroid::resume(bool renewContext)
+
+If renewContext is true then the GL context has been renewed and all GL
+resources (textures, shaders) will need to be recreated.
+
+The default implementation of resume() just calls setup() if renewContext
+is true.  This is unsuitable for non-trivial apps.
+
+TODO: saved state onPause / onResume.
+
 Status
 ------
 

@@ -12,6 +12,7 @@
 using std::vector;
 using std::map;
 using ci::app::TouchEvent;
+using ci::app::Orientation_t;
 
 /**
  * Our saved state data.
@@ -51,9 +52,6 @@ struct engine {
 
     int animating;
 
-    // int32_t width;
-    // int32_t height;
-
     struct saved_state savedState;
 
     ci::app::AppAndroid* cinderApp;
@@ -66,11 +64,10 @@ struct engine {
     float accelUpdateFrequency;
     ActivityState activityState;
 
-    int orientation;
-    // bool  initialized;
-    // bool  paused;
-    // bool  resumed;
-    // bool  renewContext;
+    Orientation_t orientation;
+    bool renewContext;
+    bool setupCompleted;
+    bool resumed;
 };
 
 static void engine_draw_frame(struct engine* engine) {
@@ -242,7 +239,7 @@ inline void engine_disable_accelerometer(struct engine* engine)
 }
 
 void log_engine_state(struct engine* engine) {
-    static char* activityStates[] = {
+    static const char* activityStates[] = {
         "Start",
         "Resume",
         "Pause",
@@ -273,25 +270,16 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             log_engine_state(engine);
             // The window is being shown, get it ready.
             if (engine->androidApp->window != NULL) {
-                engine->orientation = AConfiguration_getOrientation(engine->androidApp->config);
+                engine->orientation = cinderApp->orientationFromConfig();
                 engine->cinderRenderer->setup(cinderApp, engine->androidApp, cinderApp->mWidth, cinderApp->mHeight);
                 cinderApp->privateResize__(ci::Vec2i(cinderApp->getWindowWidth(), cinderApp->getWindowHeight()));
                 cinderApp->privatePrepareSettings__();
-                cinderApp->privateSetup__();
-
-                // if (!engine->initialized) {
-                //     //  First time setup
-                //     cinderApp->privatePrepareSettings__();
-                //     cinderApp->privateSetup__();
-                //     engine->initialized = true;
-                // }
-                // else if (engine->paused) {
-                //     //  Resumed and recreated context
-                //     engine->renewContext = true;
-                // }
-
-                engine_draw_frame(engine);
                 engine->animating = 0;
+
+                //  New GL context, trigger app initialization
+                engine->resumed = engine->setupCompleted;
+                engine->setupCompleted = false;
+                engine->renewContext = true;
             }
             break;
 
@@ -312,14 +300,22 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
                 engine_enable_accelerometer(engine);
             }
 
-            // if (engine->resumed) {
-            //     cinderApp->privateResume__(engine->renewContext);
-            // }
+            if (!engine->setupCompleted) {
+                if (engine->resumed) {
+                    CI_LOGW("XXXXXX RESUMING privateResume__ renew context %s", engine->renewContext ? "true" : "false");
+                    cinderApp->privateResume__(engine->renewContext);
+                }
+                else {
+                    CI_LOGW("XXXXXX SETUP privateSetup__");
+                    cinderApp->privateSetup__();
+                }
+                engine->setupCompleted = true;
+                engine->renewContext   = false;
+
+                engine_draw_frame(engine);
+            }
 
             engine->animating = 1;
-            // engine->paused       = false;
-            // engine->resumed      = false;
-            // engine->renewContext = false;
 
             break;
 
@@ -334,9 +330,8 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 
         case APP_CMD_RESUME:
             CI_LOGW("XXX APP_CMD_RESUME");
-            // engine->activityState = ACTIVITY_RESUME;
+            engine->activityState = ACTIVITY_RESUME;
             log_engine_state(engine);
-            // engine->resumed = true;
             break;
         
         case APP_CMD_START:
@@ -347,10 +342,10 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
 
         case APP_CMD_PAUSE:
             CI_LOGW("XXX APP_CMD_PAUSE");
-            // engine->paused = true;
             engine->activityState = ACTIVITY_PAUSE;
-            engine->animating = 0;
             cinderApp->privatePause__();
+            engine->animating = 0;
+            engine_draw_frame(engine);
             log_engine_state(engine);
             break;
 
@@ -368,18 +363,22 @@ static void engine_handle_cmd(struct android_app* app, int32_t cmd) {
             break;
 
         case APP_CMD_CONFIG_CHANGED:
-            int orientation = AConfiguration_getOrientation(engine->androidApp->config);
-            int screenSize = AConfiguration_getScreenSize(engine->androidApp->config);
-            int screenLong = AConfiguration_getScreenLong(engine->androidApp->config);
+            Orientation_t newOrient = cinderApp->orientationFromConfig();
+            int32_t screenLong = AConfiguration_getScreenLong(engine->androidApp->config);
 
-            //  XXX notify resize AND orientation change
-            if (orientation != engine->orientation) {
-                CI_LOGW("Resizing to (%d, %d)", cinderApp->getWindowHeight(), cinderApp->getWindowWidth());
-                cinderApp->setWindowSize(cinderApp->getWindowHeight(), cinderApp->getWindowWidth());
-                cinderApp->privateResize__(ci::Vec2i(cinderApp->getWindowHeight(), cinderApp->getWindowWidth()));
-                engine->orientation = orientation;
+            //  Trigger resize event
+            //  XXX incorrect results when switching from landscape->portrait while the
+            //      application is paused
+            if (newOrient != engine->orientation) {
+                ANativeWindow* window = engine->androidApp->window;
+                int32_t width  = cinderApp->getWindowWidth();
+                int32_t height = cinderApp->getWindowHeight();
+                std::swap(width, height);
+                engine->orientation = newOrient;
+                CI_LOGW("Config change: resizing to (%d, %d) long %d", width, height, screenLong);
+                cinderApp->setWindowSize(width, height);
+                cinderApp->privateResize__(ci::Vec2i(width, height));
             }
-            CI_LOGW("XXX APP_CMD_CONFIG_CHANGED orientation %d (size %d, long %d)", orientation, screenSize, screenLong);
             break;
 
     }
@@ -401,10 +400,10 @@ static void android_run(ci::app::AppAndroid* cinderApp, struct android_app* andr
     engine.accelEnabled   = false;
 
     //  Activity state tracking
-    // engine.initialized  = false;
-    // engine.paused       = false;
-    // engine.resumed      = false;
-    // engine.renewContext = false;
+    // engine.savedState     = NULL;
+    engine.setupCompleted = false;
+    engine.resumed        = false;
+    engine.renewContext   = true;
 
     //  XXX Used by accelerometer, move to cinder app?
     cinderApp->mEngine = &engine;
@@ -426,6 +425,9 @@ static void android_run(ci::app::AppAndroid* cinderApp, struct android_app* andr
         // We are starting with a previous saved state; restore from it.
         CI_LOGW("XXX android_run RESTORING SAVED STATE");
         engine.savedState = *(struct saved_state*)androidApp->savedState;
+        engine.resumed = true;
+    }
+    else {
     }
 
     //  Event loop
@@ -461,8 +463,6 @@ static void android_run(ci::app::AppAndroid* cinderApp, struct android_app* andr
 
             // Check if we are exiting.
             if (androidApp->destroyRequested != 0) {
-                // XXX frequently crashes in teardown when orientation is locked 
-                // to landscape
                 engine.animating = 0;
                 engine.cinderRenderer->teardown();
                 return;
@@ -481,8 +481,6 @@ static void android_run(ci::app::AppAndroid* cinderApp, struct android_app* andr
 }
 
 namespace cinder { namespace app {
-
-AppAndroid*	AppAndroid::sInstance = 0;
 
 AppAndroid::AppAndroid()
 	: App()
@@ -508,7 +506,7 @@ void AppAndroid::resume( bool renewContext )
     }
 }
 
-void AppAndroid::setAndroidApp( struct android_app* androidApp)
+void AppAndroid::setAndroidImpl( struct android_app* androidApp )
 {
     mAndroidApp = androidApp;
 }
@@ -611,6 +609,11 @@ void AppAndroid::quit()
 	return;
 }
 
+Orientation_t AppAndroid::orientation()
+{
+    return mEngine->orientation;
+}
+
 void AppAndroid::privatePrepareSettings__()
 {
 	prepareSettings( &mSettings );
@@ -670,18 +673,42 @@ void AppAndroid::privateAccelerated__( const Vec3f &direction )
 	mLastRawAccel = direction;
 }
 
+Orientation_t AppAndroid::orientationFromConfig()
+{
+    Orientation_t ret = ORIENTATION_ANY;
+    int orient = AConfiguration_getOrientation(mAndroidApp->config);
+
+    switch (orient) {
+    case ACONFIGURATION_ORIENTATION_PORT:
+        ret = ORIENTATION_PORTRAIT;
+        break;
+    case ACONFIGURATION_ORIENTATION_LAND:
+        ret = ORIENTATION_LANDSCAPE;
+        break;
+    case ACONFIGURATION_ORIENTATION_SQUARE:
+        ret = ORIENTATION_SQUARE;
+        break;
+    default:
+        break;
+    }
+
+    return ret;
+}
+
+
 #if defined( CINDER_AASSET )
 //  static loadResource method, loads from assets/
 DataSourceAssetRef AppAndroid::loadResource(const std::string &resourcePath)
 {
-    AppAndroid* cinderApp   = AppAndroid::get();
+    AppAndroid* cinderApp = AppAndroid::get();
+    CI_LOGW("cinderApp %p", cinderApp);
     if (cinderApp) {
+        CI_LOGW("loading via manager");
         AAssetManager* mgr = cinderApp->mAndroidApp->activity->assetManager;
         return DataSourceAsset::createRef(mgr, resourcePath);
     }
     else {
-        //  XXX throw ResourceLoadExc( resourcePath ); on error
-        return DataSourceAssetRef();
+        throw ResourceLoadExc( resourcePath );
     }
 }
 #endif

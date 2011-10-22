@@ -23,7 +23,7 @@ class AndroidTest : public AppNative {
 public:
 	void setup();
 	void draw();
-	// void resume(bool renewContext);
+	void resume(bool renewContext);
 	
 	// gl::Texture		   mTexture;	
 
@@ -42,6 +42,16 @@ public:
     gl::GlesContextRef mContext;
 #endif
 };
+
+void AndroidTest::resume(bool renewContext)
+{
+    if (renewContext) {
+        mLogoTexture.reset();
+        mContext.reset();
+
+        setup();
+    }
+}
 
 void AndroidTest::setup()
 {
@@ -78,22 +88,25 @@ void AndroidTest::setup()
     // mFontTexture = mTexFont2->getTextures().front();
     // gl::enableAlphaBlending(format.getPremultiply());
 
-    mLogoTexture = gl::Texture(loadImage(loadResource("cinder_logo.png")));
+    DataSourceRef dataSource = loadResource("cinder_logo.png");
+    if (!dataSource) {
+        CI_LOGW("Error loading resource");
+    }
+    else {
+        mLogoTexture = gl::Texture(loadImage(dataSource));
+    }
 
 #if defined( CINDER_GLES2 )
     mContext = gl::setGlesContext();
 #endif
 }
 
-// void AndroidTest::resume(bool renewContext)
-// {
-// 	if (renewContext) {
-// 		setup();
-// 	}
-// }
-
 void AndroidTest::draw()
 {
+#if defined( CINDER_GLES2 )
+    mContext->bind();
+#endif
+
     float r = math<float>::abs(math<float>::sin(getElapsedSeconds() * 0.30f));
     float g = math<float>::abs(math<float>::cos(getElapsedSeconds() * 0.17f));
     float b = math<float>::abs(math<float>::cos(getElapsedSeconds() * 0.67f));
@@ -110,9 +123,6 @@ void AndroidTest::draw()
 //    mTexFont3->drawString( "Font packing demonstration", Vec2f(rightEdge - demoWidth,
 //                getWindowHeight() - mTexFont3->getDescent()) );
 //
-#if defined( CINDER_GLES2 )
-    mContext->bind();
-#endif
 	// if( mFontTexture ) {
 	// 	gl::draw( mFontTexture, Vec2f( 0, 0 ) );
     // }

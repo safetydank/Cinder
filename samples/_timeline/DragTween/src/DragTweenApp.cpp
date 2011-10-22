@@ -64,6 +64,10 @@ void DragTweenApp::setup()
     gl::setMatricesWindow(getWindowWidth(), getWindowHeight());
 #endif
 
+#if defined( CINDER_ANDROID )
+    mCircles.clear();
+#endif
+
 	// setup the initial animation
 	const size_t numCircles = 35;
 	for( size_t c = 0; c < numCircles; ++c ) {

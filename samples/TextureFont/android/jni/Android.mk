@@ -4,9 +4,9 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE     := TextureFont
 
-LOCAL_CFLAGS := -DCINDER_GLES2
 LOCAL_SRC_FILES := ../../src/TextureFontApp.cpp
 
+# LOCAL_CFLAGS    := -DCINDER_GLES2
 LOCAL_LDLIBS    := -landroid 
 LOCAL_STATIC_LIBRARIES := cinder freeimage ft2 android_native_app_glue 
 

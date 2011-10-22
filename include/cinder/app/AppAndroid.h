@@ -11,6 +11,16 @@ struct engine;
 
 namespace cinder { namespace app {
 
+class AppAndroid;
+
+enum Orientation_t
+{
+    ORIENTATION_ANY = 0,
+    ORIENTATION_PORTRAIT,
+    ORIENTATION_LANDSCAPE,
+    ORIENTATION_SQUARE
+};
+
 class AppAndroid : public App {
   public:
 	class Settings : public App::Settings {
@@ -112,17 +122,23 @@ class AppAndroid : public App {
 	//! Ceases execution of the application. Not implemented yet on iPhone
 	virtual void	quit();
 
-	//! Returns a pointer to the current global App
-	static AppAndroid*	get() { return sInstance; }
+	//! Returns a pointer to the current global AppAndroid
+	static AppAndroid*	get() { return static_cast<AppAndroid*>(App::get()); }
+
+    //! Return app orientation
+    Orientation_t orientation();
+
 	//! Returns a pointer to the current global AppBasic
 	virtual const Settings&	getSettings() const { return mSettings; }
 
-	void setAndroidApp(struct android_app* androidApp);
+    void setAndroidImpl( struct android_app* androidApp );
+	// void setAndroidApp( struct android_app* androidApp );
+    // void setAppFactory( IAppFactory* factory );
 
 	//! \cond
 	// These are called by application instantation macros and are only used in the launch process
 	static void		prepareLaunch() { App::prepareLaunch(); }
-	static void		executeLaunch( AppAndroid *app, class Renderer *renderer, const char *title, struct android_app* androidApp ) { sInstance = app; app->setAndroidApp(androidApp); App::executeLaunch( app, renderer, title, 0, NULL ); }
+	static void		executeLaunch( AppAndroid* app, class Renderer *renderer, const char *title, struct android_app* androidApp ) { app->setAndroidImpl(androidApp); App::executeLaunch(app, renderer, title, 0, NULL ); }
 	static void		cleanupLaunch() { App::cleanupLaunch(); }
 	
 	virtual void	launch( const char *title, int argc, char * const argv[] );
@@ -154,9 +170,11 @@ class AppAndroid : public App {
 
     struct engine* mEngine;
 	
+    Orientation_t orientationFromConfig();
+
   private:
 	
-	static AppAndroid		*sInstance;
+	// static AppAndroid		*sInstance;
 	Settings				 mSettings;
 	
 	std::vector<TouchEvent::Touch>	mActiveTouches;
@@ -178,10 +196,10 @@ class AppAndroid : public App {
 #define CINDER_APP_ANDROID( APP, RENDERER )									\
 extern "C" {																\
   void android_main( struct android_app* state ) {							\
+    cinder::app::AppAndroid *app = new APP;                                 \
   	cinder::app::AppAndroid::prepareLaunch();								\
-  	cinder::app::AppAndroid *app = new APP;									\
   	cinder::app::Renderer *ren = new RENDERER;								\
-  	cinder::app::AppAndroid::executeLaunch( app, ren, #APP, state );		\
+  	cinder::app::AppAndroid::executeLaunch( app, ren, #APP, state );	    \
   	cinder::app::AppAndroid::cleanupLaunch();								\
   }																			\
 }
