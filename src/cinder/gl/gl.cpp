@@ -282,6 +282,18 @@ void disableDepthWrite()
 	glDepthMask( GL_FALSE );
 }
 
+#if ! defined( CINDER_GLES )
+void enableWireframe()
+{
+	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+}
+
+void disableWireframe()
+{
+	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+}
+#endif
+
 #if ! defined( CINDER_GLES2 )
 void drawLine( const Vec2f &start, const Vec2f &end )
 {

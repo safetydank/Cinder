@@ -134,16 +134,16 @@ Area getViewport();
 void setViewport( const Area &area );
 
 //! Produces a translation by \a pos in the current matrix.
-void translate( const Vec2f &pos );
+void translate( const Vec2f &pos ) { Context::translate(pos); }
 //! Produces a translation by \a x and \a y in the current matrix.
 inline void translate( float x, float y ) { translate( Vec2f( x, y ) ); }
 //! Produces a translation by \a pos in the current matrix.
-void translate( const Vec3f &pos );
+void translate( const Vec3f &pos ) { Context::translate(pos); }
 //! Produces a translation by \a x, \a y and \a z in the current matrix.
 inline void translate( float x, float y, float z ) { translate( Vec3f( x, y, z ) ); }
 
 //! Produces a scale by \a scale in the current matrix.
-void scale( const Vec3f &scl );
+void scale( const Vec3f &scl ) { Context::scale(scl); }
 //! Produces a scale by \a scl in the current matrix.
 inline void scale( const Vec2f &scl ) { scale( Vec3f( scl.x, scl.y, 0 ) ); }
 //! Produces a scale by \a x and \a y in the current matrix.
@@ -152,9 +152,9 @@ inline void scale( float x, float y ) { scale( Vec3f( x, y, 0 ) ); }
 inline void scale( float x, float y, float z ) { scale( Vec3f( x, y, z ) ); }
 
 //! Produces a rotation around the X-axis by \a xyz.x degrees, the Y-axis by \a xyz.y degrees and the Z-axis by \a xyz.z degrees in the current matrix. Processed in X-Y-Z order.
-void rotate( const Vec3f &xyz );
+void rotate( const Vec3f &xyz ) { Context::rotate(xyz); }
 //! Produces a rotation by the quaternion \a quat in the current matrix.
-void rotate( const Quatf &quat );
+void rotate( const Quatf &quat ) { Context::rotate(quat); }
 //! Produces a 2D rotation, the equivalent of a rotation around the Z axis by \a degrees.
 inline void rotate( float degrees ) { rotate( Vec3f( 0, 0, degrees ) ); }
 
