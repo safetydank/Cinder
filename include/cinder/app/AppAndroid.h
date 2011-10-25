@@ -117,7 +117,7 @@ class AppAndroid : public App {
 	virtual double		getElapsedSeconds() const;
 
 	//! Returns the path to the application on disk
-	virtual std::string			getAppPath();
+	virtual fs::path			getAppPath();
 
 	//! Ceases execution of the application. Not implemented yet on iPhone
 	virtual void	quit();

@@ -57,9 +57,9 @@ class StreamBase : private boost::noncopyable {
 #endif
  
 	//! Returns the file name of the path from which a Stream originated when relevant. Empty string when undefined.
-  	const std::string&	getFileName() const { return mFileName; }
+  	const fs::path&		getFileName() const { return mFileName; }
 	//! Sets the file name of the path from which a Stream originated when relevant. Empty string when undefined.
-	void				setFileName( const std::string &aFileName ) { mFileName = aFileName; }
+	void				setFileName( const fs::path &aFileName ) { mFileName = aFileName; }
 
 	//! Returns whether the Stream has been requested to destroy its source upon its own destruction. For example, IStreamFile will delete its source file. Ignored in some types of streams. Defaults to \c false.
 	bool		getDeleteOnDestroy() const { return mDeleteOnDestroy; }
@@ -78,7 +78,7 @@ class StreamBase : private boost::noncopyable {
  protected:
 	StreamBase() : mDeleteOnDestroy( false ) {}
 
-	std::string				mFileName;
+	fs::path				mFileName;
 	bool					mDeleteOnDestroy;
 };
 
@@ -159,7 +159,7 @@ typedef std::shared_ptr<class IStreamFile>	IStreamFileRef;
 class IStreamFile : public IStream {
  public:
 	//! Creates a new IStreamFileRef from a C-style file pointer \a FILE as returned by fopen(). If \a ownsFile the returned stream will destroy the stream upon its own destruction.
-	static IStreamFileRef createRef( FILE *file, bool ownsFile = true, int32_t defaultBufferSize = 2048 );
+	static IStreamFileRef create( FILE *file, bool ownsFile = true, int32_t defaultBufferSize = 2048 );
 	~IStreamFile();
 
 	size_t		readDataAvailable( void *dest, size_t maxSize );
@@ -225,7 +225,7 @@ typedef std::shared_ptr<class OStreamFile>	OStreamFileRef;
 class OStreamFile : public OStream {
   public:
 	//! Creates a new OStreamFileRef from a C-style file pointer \a FILE as returned by fopen(). If \a ownsFile the returned stream will destroy the stream upon its own destruction.
-	static OStreamFileRef	createRef( FILE *file, bool ownsFile = true );
+	static OStreamFileRef	create( FILE *file, bool ownsFile = true );
 	~OStreamFile();
 
 	virtual off_t		tell() const;
@@ -250,7 +250,7 @@ typedef std::shared_ptr<class IoStreamFile>		IoStreamFileRef;
 class IoStreamFile : public IoStream {
  public:
 	//! Creates a new IoStreamFileRef from a C-style file pointer \a FILE as returned by fopen(). If \a ownsFile the returned stream will destroy the stream upon its own destruction.
-	static IoStreamFileRef createRef( FILE *file, bool ownsFile = true, int32_t defaultBufferSize = 2048 );
+	static IoStreamFileRef create( FILE *file, bool ownsFile = true, int32_t defaultBufferSize = 2048 );
 	~IoStreamFile();
 
 	size_t		readDataAvailable( void *dest, size_t maxSize );
@@ -285,7 +285,7 @@ typedef std::shared_ptr<class IStreamMem>	IStreamMemRef;
 class IStreamMem : public IStream {
  public:
 	//! Creates a new IStreamMemRef from the memory pointed to by \a data which is of size \a size bytes.
-	static IStreamMemRef		createRef( const void *data, size_t size );
+	static IStreamMemRef		create( const void *data, size_t size );
 	~IStreamMem();
 
 	size_t		readDataAvailable( void *dest, size_t maxSize );
@@ -318,7 +318,7 @@ typedef std::shared_ptr<class OStreamMem>		OStreamMemRef;
 
 class OStreamMem : public OStream {
  public:
-	static OStreamMemRef		createRef( size_t bufferSizeHint = 4096 ) { return std::shared_ptr<OStreamMem>( new OStreamMem( bufferSizeHint ) ); }
+	static OStreamMemRef		create( size_t bufferSizeHint = 4096 ) { return std::shared_ptr<OStreamMem>( new OStreamMem( bufferSizeHint ) ); }
 
 	~OStreamMem();
 
@@ -352,12 +352,12 @@ class IStreamStateRestore {
 	off_t		mOffset;
 };
 
-//! Opens the file lcoated at \a path for read access as a stream.
-IStreamFileRef	loadFileStream( const std::string &path );
+//! Opens the file located at \a path for read access as a stream.
+IStreamFileRef	loadFileStream( const fs::path &path );
 //! Opens the file located at \a path for write access as a stream, and creates it if it does not exist. Optionally creates any intermediate directories when \a createParents is true.
-OStreamFileRef	writeFileStream( const std::string &path, bool createParents = true );
+OStreamFileRef	writeFileStream( const fs::path &path, bool createParents = true );
 //! Opens a path for read-write access as a stream.
-IoStreamFileRef readWriteFileStream( const std::string &path );
+IoStreamFileRef readWriteFileStream( const fs::path &path );
 
 #if defined( CINDER_ANDROID )
 IStreamAssetRef loadAssetStream(AAssetManager* mgr, const std::string &path);

@@ -19,6 +19,7 @@ void iPhoneAccelerometerApp::setup()
 	enableAccelerometer();
 	mCam.setPerspective( 60, getWindowAspectRatio(), 1, 1000 );
 	mCam.lookAt( Vec3f( 0, 0, 3 ), Vec3f::zero() );	
+    glEnable(GL_CULL_FACE);
 }
 
 void iPhoneAccelerometerApp::accelerated( AccelEvent event )

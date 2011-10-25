@@ -392,7 +392,7 @@ UTF8_CPP_SRC = ../../../src/utf8-cpp/source
 LOCAL_MODULE 	 := cinder
 
 # required for wchar_t support, used by boost::filesystem
-LOCAL_CFLAGS     := -D_GLIBCPP_USE_WCHAR_T
+LOCAL_CFLAGS     := -D_GLIBCPP_USE_WCHAR_T -D__LITTLE_ENDIAN__
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../include \
 					$(LOCAL_PATH)/../../../boost \
@@ -426,6 +426,7 @@ LOCAL_SRC_FILES  := $(CINDER_SRC)/app/App.cpp \
 					$(CINDER_SRC)/Buffer.cpp \
 					$(CINDER_SRC)/Camera.cpp \
 					$(CINDER_SRC)/Channel.cpp \
+					$(CINDER_SRC)/CinderMath.cpp \
 					$(CINDER_SRC)/Color.cpp \
 					$(CINDER_SRC)/DataSource.cpp \
 					$(CINDER_SRC)/DataTarget.cpp \
@@ -467,7 +468,8 @@ LOCAL_SRC_FILES  := $(CINDER_SRC)/app/App.cpp \
 ifdef USE_GLES2
 LOCAL_SRC_FILES += $(CINDER_SRC)/gl/GlslProg.cpp \
 					$(CINDER_SRC)/gl/Vbo.cpp \
-					$(CINDER_SRC)/gl/gles2.cpp
+ 					$(CINDER_SRC)/gl/gles2.cpp
+
 LOCAL_CFLAGS += -DCINDER_GLES2
 GLES_LDLIB = -lGLESv2
 else

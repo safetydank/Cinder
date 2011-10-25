@@ -7,7 +7,7 @@ LOCAL_MODULE    := DragTween
 LOCAL_SRC_FILES := ../../src/DragTweenApp.cpp
 
 LOCAL_LDLIBS    := -landroid
-LOCAL_STATIC_LIBRARIES := cinder freeimage ft2 android_native_app_glue 
+LOCAL_STATIC_LIBRARIES := cinder freeimage ft2 boost_system android_native_app_glue 
 
 include $(BUILD_SHARED_LIBRARY)
 

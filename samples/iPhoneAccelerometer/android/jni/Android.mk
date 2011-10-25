@@ -7,7 +7,7 @@ LOCAL_MODULE     := Accelerometer
 LOCAL_SRC_FILES := ../../src/iPhoneAccelerometerApp.cpp
 
 LOCAL_LDLIBS    := -landroid
-LOCAL_STATIC_LIBRARIES := cinder android_native_app_glue 
+LOCAL_STATIC_LIBRARIES := cinder boost_system boost_filesystem android_native_app_glue 
 
 include $(BUILD_SHARED_LIBRARY)
 

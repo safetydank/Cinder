@@ -598,10 +598,10 @@ double AppAndroid::getElapsedSeconds() const
 			- (mStartTime.tv_sec + mStartTime.tv_nsec / 1e9) );
 }
 
-std::string AppAndroid::getAppPath()
+fs::path AppAndroid::getAppPath()
 { 
 	// XXX TODO
-	return std::string();
+	return fs::path();
 }
 
 void AppAndroid::quit()

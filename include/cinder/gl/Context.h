@@ -1,130 +1,85 @@
 #pragma once
 
-#if defined( CINDER_GLES2 )
-  #include "cinder/gles2.h"
-#endif
+#include "cinder/Color.h"
 
-namespace cinder { namespace gl {
+namespace cinder { namespace gl { namespace context {
 
 #if ! defined( CINDER_GLES2 )
 
-class GLContext
-{
-    static void initialize();
-};
+//  OpenGL / GLES1 implementation
+inline void initialize() {}
+inline void bind()       {}
+inline void unbind()     {}
+
+void enableClientState(GLenum cap) { glEnableClientState(cap); }
+
+void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    glVertexPointer(size, type, stride, pointer);
+}
+void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    glTexCoordPointer(size, type, stride, pointer);
+}
+void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    glColorPointer(size, type, stride, pointer);
+}
+void normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    glNormalPointer(size, type, stride, pointer);
+}
+
+inline void color( float r, float g, float b ) { glColor4f( r, g, b, 1.0f ); }
+inline void color( float r, float g, float b, float a ) { glColor4f( r, g, b, a ); }
+inline void color( const Color8u &c ) { glColor4ub( c.r, c.g, c.b, 255 ); }
+inline void color( const ColorA8u &c ) { glColor4ub( c.r, c.g, c.b, c.a ); }
+inline void color( const Color &c ) { glColor4f( c.r, c.g, c.b, 1.0f ); }
+inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
+
+inline void translate( const Vec2f &pos ) { glTranslatef( pos.x, pos.y, 0 ); }
+inline void translate( const Vec3f &pos ) { glTranslatef( pos.x, pos.y, pos.z ); }
+
+inline void scale( const Vec3f &scl ) { glScalef( scl.x, scl.y, scl.z ); }
+
+void rotate( const Vec3f &xyz );
+void rotate( const Quatf &quat );
 
 #endif
 
 #if defined( CINDER_GLES2 )
 
-class GLES2Context;
-typedef std::shared_ptr<GLES2Context> GLES2ContextRef;
+//  Compatibility constants
+#if ! defined(GL_VERTEX_ARRAY)
+   #define GL_VERTEX_ARRAY                   0x8074
+   #define GL_NORMAL_ARRAY                   0x8075
+   #define GL_COLOR_ARRAY                    0x8076
+   #define GL_TEXTURE_COORD_ARRAY            0x8078
+#endif
 
-//  Should be called by RendererGl
-void initGLES2();
-void freeGLES2();
+void initialize();
+void bind();
+void unbind();
 
-void bindGLES2();
-void unbindGLES2();
+void enableClientState(GLenum cap);
 
-class GLES2Context : public SelectAttrCallback
-{
-public:
-    static void initialize();
+void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 
-protected:
-    GLES2Context();
-    GLES2Context( GlslProg& shader, GlesAttr& attr );
+void color( float r, float g, float b );
+void color( float r, float g, float b, float a );
+void color( const Color8u &c );
+void color( const ColorA8u &c );
+void color( const Color &c );
+void color( const ColorA &c );
 
-    void init( GlslProg& shader, GlesAttr& attr );
+void translate( const Vec2f &pos );
+void translate( const Vec3f &pos );
 
-public:
-    //!  Bind GLES2 shader
-    void bind();
+void scale( const Vec3f &scl );
 
-    //!  Unbind GLES2 shader
-    void unbind();
-
-    virtual void selectAttrs(uint32_t activeAttrs);
-
-    GlesAttr& attr();
-
-    void setMatrices( const Camera &cam );
-    void setModelView( const Camera &cam );
-    void setProjection( const Camera &cam );
-    void setProjection( const Matrix44f &proj );
-    void pushModelView();
-    void popModelView();
-    void pushModelView( const Camera &cam );
-    void pushProjection( const Camera &cam );
-    void pushMatrices();
-    void popMatrices();
-    void multModelView( const Matrix44f &mtx );
-    void multProjection( const Matrix44f &mtx );
-
-    Matrix44f getModelView();
-    Matrix44f getProjection();
-
-    void setMatricesWindowPersp( int screenWidth, int screenHeight, float fovDegrees = 60.0f, float nearPlane = 1.0f, float farPlane = 1000.0f, bool originUpperLeft = true );
-    inline void setMatricesWindowPersp( const Vec2i &screenSize, float fovDegrees = 60.0f, float nearPlane = 1.0f, float farPlane = 1000.0f, bool originUpperLeft = true )
-    { setMatricesWindowPersp( screenSize.x, screenSize.y, fovDegrees, nearPlane, farPlane ); }
-    void setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft = true );
-    inline void setMatricesWindow( const Vec2i &screenSize, bool originUpperLeft = true ) { setMatricesWindow( screenSize.x, screenSize.y, originUpperLeft ); }
-
-    //  assumes we'll always be working on the modelview matrix, otherwise we can add
-    //  matrix mode tracking later...
-    void        translate( const Vec2f &pos );
-    inline void translate( float x, float y ) { translate( Vec2f( x, y ) ); }
-    void        translate( const Vec3f &pos );
-    inline void translate( float x, float y, float z ) { translate( Vec3f( x, y, z ) ); }
-
-    void        scale( const Vec3f &scl );
-    inline void scale( const Vec2f &scl ) { scale( Vec3f( scl.x, scl.y, 1.0f ) ); }
-    inline void scale( float x, float y ) { scale( Vec3f( x, y, 1.0f ) ); }
-    inline void scale( float x, float y, float z ) { scale( Vec3f( x, y, z ) ); }
-
-    void        rotate( const Vec3f &xyz );
-    void        rotate( const Quatf &quat );
-    inline void rotate( float degrees ) { rotate( Vec3f( 0, 0, degrees ) ); }
-
-    void color( float r, float g, float b );
-    void color( float r, float g, float b, float a );
-    void color( const Color8u &c );
-    void color( const ColorA8u &c );
-    void color( const Color &c );
-    void color( const ColorA &c );
-
-protected:
-    void updateUniforms();
-
-    //  Shader program
-    GlslProg mProg;
-
-    //  Shader attributes
-    GlesAttr mAttr;
-
-    //  Uniforms
-    Matrix44f mProj;
-    Matrix44f mModelView;
-    ColorA    mColor;
-    Texture   mTexture;
-    uint32_t  mActiveAttrs;
-
-    bool mBound;
-
-    bool mProjDirty;
-    bool mModelViewDirty;
-    bool mColorDirty;
-    bool mTextureDirty;
-    bool mActiveAttrsDirty;
-
-    std::vector<Matrix44f> mModelViewStack;
-    std::vector<Matrix44f> mProjStack;
-};
-
-typedef GLES2Context GLContext;
+void rotate( const Vec3f &xyz );
+void rotate( const Quatf &quat );
 
 #endif
 
-} }
+} } }
 

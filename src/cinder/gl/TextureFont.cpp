@@ -53,9 +53,6 @@ const struct {
 	#include <utf8.h>
 	#include <iterator>
 
-#if defined( CINDER_GLES2 )
-    #include "cinder/gl/gles2.h"
-#endif
 #endif
 
 #include <set>
@@ -364,26 +361,26 @@ void TextureFont::drawGlyphs( const vector<pair<uint16_t,Vec2f> > &glyphMeasures
 
 	Vec2f baseline = baselineIn;
 
-#if ! defined( CINDER_GLES2 )
-	glEnableClientState( GL_VERTEX_ARRAY );
+// #if ! defined( CINDER_GLES2 )
+    gl::enableClientState( GL_VERTEX_ARRAY );
 	if( ! colors.empty() )
-		glEnableClientState( GL_COLOR_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-#else
-    GlesContextRef esContext = gl::getGlesContext();
-    if (!esContext)  {
-        CI_LOGW("TextureFont draw error: no global ES context set");
-        return;
-    }
-
-    GlesAttr& attr = esContext->attr();
-    glEnableVertexAttribArray(attr.mVertex);
-	if( ! colors.empty() )
-        glEnableVertexAttribArray(attr.mColor);
-    glEnableVertexAttribArray(attr.mTexCoord);
-
-    esContext->selectAttrs( ES2_ATTR_VERTEX | ES2_ATTR_TEXCOORD | (colors.empty() ? 0 : ES2_ATTR_COLOR) );
-#endif
+		gl::enableClientState( GL_COLOR_ARRAY );
+    gl::enableClientState( GL_TEXTURE_COORD_ARRAY );
+// #else
+//     GlesContextRef esContext = gl::getGlesContext();
+//     if (!esContext)  {
+//         CI_LOGW("TextureFont draw error: no global ES context set");
+//         return;
+//     }
+// 
+//     GlesAttr& attr = esContext->attr();
+//     glEnableVertexAttribArray(attr.mVertex);
+// 	if( ! colors.empty() )
+//         glEnableVertexAttribArray(attr.mColor);
+//     glEnableVertexAttribArray(attr.mTexCoord);
+// 
+//     esContext->selectAttrs( ES2_ATTR_VERTEX | ES2_ATTR_TEXCOORD | (colors.empty() ? 0 : ES2_ATTR_COLOR) );
+// #endif
 
 	const float scale = options.getScale();
 	for( size_t texIdx = 0; texIdx < mTextures.size(); ++texIdx ) {
@@ -420,21 +417,21 @@ void TextureFont::drawGlyphs( const vector<pair<uint16_t,Vec2f> > &glyphMeasures
 				destRect -= Vec2f( destRect.x1 - floor( destRect.x1 ), destRect.y1 - floor( destRect.y1 ) );				
 			
 			verts.push_back( destRect.getX2() ); verts.push_back( destRect.getY1() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 			verts.push_back( destRect.getX1() ); verts.push_back( destRect.getY1() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 			verts.push_back( destRect.getX2() ); verts.push_back( destRect.getY2() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 			verts.push_back( destRect.getX1() ); verts.push_back( destRect.getY2() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 
 			texCoords.push_back( srcCoords.getX2() ); texCoords.push_back( srcCoords.getY1() );
 			texCoords.push_back( srcCoords.getX1() ); texCoords.push_back( srcCoords.getY1() );
@@ -455,17 +452,17 @@ void TextureFont::drawGlyphs( const vector<pair<uint16_t,Vec2f> > &glyphMeasures
 			continue;
 		
 		curTex.bind();
-#if ! defined( CINDER_GLES2 )
-		glVertexPointer( 2, GL_FLOAT, 0, &verts[0] );
-		glTexCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
+//#if ! defined( CINDER_GLES2 )
+        gl::vertexPointer( 2, GL_FLOAT, 0, &verts[0] );
+        gl::texCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
 		if( ! colors.empty() )
-			glColorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
-#else
-		glVertexAttribPointer( attr.mVertex, 3, GL_FLOAT, GL_FALSE, 0, &verts[0] );
-		glVertexAttribPointer( attr.mTexCoord, 2, GL_FLOAT, GL_FALSE, 0, &texCoords[0] );
-		if( ! colors.empty() )
-			glVertexAttribPointer( attr.mColor, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, &vertColors[0] );
-#endif
+			gl::colorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
+// #else
+// 		glVertexAttribPointer( attr.mVertex, 3, GL_FLOAT, GL_FALSE, 0, &verts[0] );
+// 		glVertexAttribPointer( attr.mTexCoord, 2, GL_FLOAT, GL_FALSE, 0, &texCoords[0] );
+// 		if( ! colors.empty() )
+// 			glVertexAttribPointer( attr.mColor, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, &vertColors[0] );
+// #endif
 		glDrawElements( GL_TRIANGLES, indices.size(), indexType, &indices[0] );
 	}
 }
@@ -486,26 +483,26 @@ void TextureFont::drawGlyphs( const std::vector<std::pair<uint16_t,Vec2f> > &gly
 	gl::enable( mTextures[0].getTarget() );
 	const float scale = options.getScale();
 
-#if ! defined( CINDER_GLES2 )
-	glEnableClientState( GL_VERTEX_ARRAY );
+// #if ! defined( CINDER_GLES2 )
+    gl::enableClientState( GL_VERTEX_ARRAY );
 	if( ! colors.empty() )
-		glEnableClientState( GL_COLOR_ARRAY );
-	glEnableClientState( GL_TEXTURE_COORD_ARRAY );
-#else
-    GlesContextRef esContext = gl::getGlesContext();
-    if ( ! esContext )  {
-        CI_LOGW("TextureFont draw error: no global ES context set");
-        return;
-    }
-
-    GlesAttr& attr = esContext->attr();
-    glEnableVertexAttribArray(attr.mVertex);
-	if( ! colors.empty() )
-        glEnableVertexAttribArray(attr.mColor);
-    glEnableVertexAttribArray(attr.mTexCoord);
-
-    esContext->selectAttrs( ES2_ATTR_VERTEX | ES2_ATTR_TEXCOORD | (colors.empty() ? 0 : ES2_ATTR_COLOR) );
-#endif
+		gl::enableClientState( GL_COLOR_ARRAY );
+    gl::enableClientState( GL_TEXTURE_COORD_ARRAY );
+// #else
+//     GlesContextRef esContext = gl::getGlesContext();
+//     if ( ! esContext )  {
+//         CI_LOGW("TextureFont draw error: no global ES context set");
+//         return;
+//     }
+// 
+//     GlesAttr& attr = esContext->attr();
+//     glEnableVertexAttribArray(attr.mVertex);
+// 	if( ! colors.empty() )
+//         glEnableVertexAttribArray(attr.mColor);
+//     glEnableVertexAttribArray(attr.mTexCoord);
+// 
+//     esContext->selectAttrs( ES2_ATTR_VERTEX | ES2_ATTR_TEXCOORD | (colors.empty() ? 0 : ES2_ATTR_COLOR) );
+// #endif
 
 	for( size_t texIdx = 0; texIdx < mTextures.size(); ++texIdx ) {
 		vector<float> verts, texCoords;
@@ -561,21 +558,21 @@ void TextureFont::drawGlyphs( const std::vector<std::pair<uint16_t,Vec2f> > &gly
 			srcTexCoords.y2 = srcTexCoords.y1 + ( clipped.y2 - clipped.y1 ) * coordScale.y;
 
 			verts.push_back( clipped.getX2() ); verts.push_back( clipped.getY1() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 			verts.push_back( clipped.getX1() ); verts.push_back( clipped.getY1() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 			verts.push_back( clipped.getX2() ); verts.push_back( clipped.getY2() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 			verts.push_back( clipped.getX1() ); verts.push_back( clipped.getY2() );
-#if defined( CINDER_GLES2 )
-            verts.push_back(0);
-#endif
+// #if defined( CINDER_GLES2 )
+//             verts.push_back(0);
+// #endif
 
 			texCoords.push_back( srcTexCoords.getX2() ); texCoords.push_back( srcTexCoords.getY1() );
 			texCoords.push_back( srcTexCoords.getX1() ); texCoords.push_back( srcTexCoords.getY1() );
@@ -596,17 +593,17 @@ void TextureFont::drawGlyphs( const std::vector<std::pair<uint16_t,Vec2f> > &gly
 			continue;
 		
 		curTex.bind();
-#if ! defined( CINDER_GLES2 )
-		glVertexPointer( 2, GL_FLOAT, 0, &verts[0] );
-		glTexCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
+// #if ! defined( CINDER_GLES2 )
+        gl::vertexPointer( 2, GL_FLOAT, 0, &verts[0] );
+        gl::texCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
 		if( ! colors.empty() )
-			glColorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
-#else
-		glVertexAttribPointer( attr.mVertex, 3, GL_FLOAT, GL_FALSE, 0, &verts[0] );
-		glVertexAttribPointer( attr.mTexCoord, 2, GL_FLOAT, GL_FALSE, 0, &texCoords[0] );
-		if( ! colors.empty() )
-			glVertexAttribPointer( attr.mColor, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, &vertColors[0] );
-#endif
+			gl::colorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
+// #else
+// 		glVertexAttribPointer( attr.mVertex, 3, GL_FLOAT, GL_FALSE, 0, &verts[0] );
+// 		glVertexAttribPointer( attr.mTexCoord, 2, GL_FLOAT, GL_FALSE, 0, &texCoords[0] );
+// 		if( ! colors.empty() )
+// 			glVertexAttribPointer( attr.mColor, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, &vertColors[0] );
+// #endif
 		glDrawElements( GL_TRIANGLES, indices.size(), indexType, &indices[0] );
 	}
 }
