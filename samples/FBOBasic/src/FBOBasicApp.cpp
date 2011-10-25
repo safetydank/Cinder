@@ -43,6 +43,7 @@ void FBOBasicApp::setup()
 	gl::enableDepthWrite();	
 
 	mTorusRotation.setToIdentity();
+    glEnable(GL_CULL_FACE);
 }
 
 // Render the torus into the FBO

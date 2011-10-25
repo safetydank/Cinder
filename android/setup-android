@@ -10,9 +10,10 @@ function unpack_freeimage {
         curl -O http://expandingbrain.com/cinder/FreeImage3150.zip
         mv FreeImage3150.zip setup/FreeImage
     fi
+
     echo "Setup FreeImage..."
     rm -rf jni/FreeImage
-    unzip setup/FreeImage/FreeImage3150.zip -d jni
+    unzip -q setup/FreeImage/FreeImage3150.zip -d jni
     cp -p setup/FreeImage/Android.mk jni/FreeImage
 	# patched source files with missing function implementations
     cp -pf setup/FreeImage/dcraw_common.cpp jni/FreeImage/Source/LibRawLite/internal/dcraw_common.cpp
@@ -25,15 +26,46 @@ function unpack_freetype {
         curl -L -O http://download.savannah.gnu.org/releases/freetype/freetype-2.4.5.tar.bz2
         mv freetype-2.4.5.tar.bz2 setup/freetype
     fi
+
     echo "Setup freetype..."
     rm -rf jni/freetype-2.4.5
-    tar jxvf setup/freetype/freetype-2.4.5.tar.bz2 -C jni
+    tar jxf setup/freetype/freetype-2.4.5.tar.bz2 -C jni
     cp -p setup/freetype/Android.mk jni/freetype-2.4.5
 	cp -pf setup/freetype/ftmodule.h jni/freetype-2.4.5/include/freetype/config/ftmodule.h
 }
 
+function unpack_boost {
+    local PREBUILT_BOOST=boost-cinder-android-arm-prebuilt-1_47_0.tar.bz2
+    if [ ! -e setup/boost/$PREBUILT_BOOST ]; then
+        echo "Downloading prebuilt Boost libraries"
+        curl -O http://expandingbrain.com/cinder/$PREBUILT_BOOST
+        mkdir -p setup/boost
+        mv $PREBUILT_BOOST setup/boost
+    fi
+    echo "Setup prebuilt Boost libraries..."
+    rm -rf prebuilt/cinder/arm
+    mkdir -p prebuilt/cinder/arm
+    tar jxf setup/boost/$PREBUILT_BOOST -C prebuilt/cinder/arm
+    chmod -R a+rwX prebuilt/cinder/arm
+
+    local SRC_BOOST=boost-cinder-android-1_47_0.tar.bz2
+    if [ ! -e ../boost -a ! -e setup/boost/$SRC_BOOST ]; then
+        echo "Downloading Boost source archive"
+        mkdir -p setup/boost
+        curl -O http://expandingbrain.com/cinder/$SRC_BOOST
+        mv $SRC_BOOST setup/boost
+    fi
+
+    if [ ! -e ../boost ]; then
+        echo "Setup Boost sources..."
+        tar jxf setup/boost/$SRC_BOOST -C ..
+        chmod -R a+rwX ../boost
+    fi
+}
+
 unpack_freeimage
 unpack_freetype
+unpack_boost
 
 if [ ! -e jni/cinder/Configure.mk ]; then
     cp -pf setup/Configure.mk jni/cinder/Configure.mk

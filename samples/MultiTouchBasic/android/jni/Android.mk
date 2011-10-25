@@ -7,7 +7,7 @@ LOCAL_MODULE     := MultiTouchBasic
 LOCAL_SRC_FILES := ../../src/MultiTouchApp.cpp
 
 LOCAL_LDLIBS    := -landroid
-LOCAL_STATIC_LIBRARIES := cinder FreeImage ft2 android_native_app_glue 
+LOCAL_STATIC_LIBRARIES := cinder boost_system boost_filesystem freeimage ft2 android_native_app_glue 
 
 include $(BUILD_SHARED_LIBRARY)
 

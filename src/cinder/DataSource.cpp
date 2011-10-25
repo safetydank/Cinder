@@ -35,7 +35,7 @@ void DataSource::setFilePathHint( const std::string &aFilePathHint )
 	mFilePathHint = aFilePathHint;
 }
 
-const std::string& DataSource::getFilePath()
+const fs::path& DataSource::getFilePath()
 {
 	return mFilePath;
 }
@@ -59,15 +59,15 @@ Buffer& DataSource::getBuffer()
 
 /////////////////////////////////////////////////////////////////////////////
 // DataSourcePath
-DataSourcePathRef DataSourcePath::createRef( const std::string &path )
+DataSourcePathRef DataSourcePath::create( const fs::path &path )
 {
 	return DataSourcePathRef( new DataSourcePath( path ) );
 }
 
-DataSourcePath::DataSourcePath( const std::string &path )
+DataSourcePath::DataSourcePath( const fs::path &path )
 	: DataSource( path, Url() )
 {
-	setFilePathHint( path );
+	setFilePathHint( path.string() );
 }
 
 void DataSourcePath::createBuffer()
@@ -84,9 +84,9 @@ IStreamRef DataSourcePath::createStream()
 	return loadFileStream( mFilePath );
 }
 
-DataSourcePathRef loadFile( const std::string &path )
+DataSourceRef loadFile( const fs::path &path )
 {
-	return DataSourcePath::createRef( path );
+	return DataSourcePath::create( path );
 }
 
 #if defined( CINDER_ANDROID ) && defined( CINDER_AASSET )
@@ -105,7 +105,7 @@ DataSourceAsset::DataSourceAsset( AAssetManager *mgr, const std::string &path )
 
 void DataSourceAsset::createBuffer()
 {
-	IStreamAssetRef stream = loadAssetStream( mManager, mFilePath );
+	IStreamAssetRef stream = loadAssetStream( mManager, mFilePathHint );
 	if( ! stream )
 		throw StreamExc();
 	mBuffer = loadStreamBuffer( stream );
@@ -113,7 +113,7 @@ void DataSourceAsset::createBuffer()
 
 IStreamRef DataSourceAsset::createStream()
 {
-	return loadAssetStream( mManager, mFilePath );
+	return loadAssetStream( mManager, mFilePathHint );
 }
 
 DataSourceAssetRef loadAsset( AAssetManager *mgr, const std::string &path )
@@ -124,7 +124,7 @@ DataSourceAssetRef loadAsset( AAssetManager *mgr, const std::string &path )
 
 /////////////////////////////////////////////////////////////////////////////
 // DataSourceUrl
-DataSourceUrlRef DataSourceUrl::createRef( const Url &url )
+DataSourceUrlRef DataSourceUrl::create( const Url &url )
 {
 	return DataSourceUrlRef( new DataSourceUrl( url ) );
 }
@@ -146,14 +146,14 @@ IStreamRef DataSourceUrl::createStream()
 	return loadUrlStream( mUrl );
 }
 
-DataSourceUrlRef loadUrl( const Url &url )
+DataSourceRef loadUrl( const Url &url )
 {
-	return DataSourceUrl::createRef( url );
+	return DataSourceUrl::create( url );
 }
 
 /////////////////////////////////////////////////////////////////////////////
 // DataSourceBuffer
-DataSourceBufferRef DataSourceBuffer::createRef( Buffer buffer, const std::string &filePathHint )
+DataSourceBufferRef DataSourceBuffer::create( Buffer buffer, const std::string &filePathHint )
 {
 	DataSourceBufferRef result( new DataSourceBuffer( buffer ) );
 	result->setFilePathHint( filePathHint );
@@ -173,7 +173,7 @@ void DataSourceBuffer::createBuffer()
 
 IStreamRef DataSourceBuffer::createStream()
 {
-	return IStreamMem::createRef( mBuffer.getData(), mBuffer.getDataSize() );
+	return IStreamMem::create( mBuffer.getData(), mBuffer.getDataSize() );
 }
 
 } // namespace cinder

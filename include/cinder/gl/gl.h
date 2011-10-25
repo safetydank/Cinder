@@ -70,6 +70,8 @@
 	#endif
 #endif
 
+#include "cinder/gl/Context.h"
+
 // forward declarations
 namespace cinder {
 	class Camera; class TriMesh2d; class TriMesh; class Sphere;
@@ -168,17 +170,17 @@ inline void vertex( float x, float y, float z ) { glVertex3f( x, y, z ); }
 #endif // ! defined( CINDER_GLES )
 
 //! Sets the current color and the alpha value to 1.0
-inline void color( float r, float g, float b ) { glColor4f( r, g, b, 1.0f ); }
+inline void color( float r, float g, float b ) { Context::color(r, g, b); }
 //! Sets the current color and alpha value
-inline void color( float r, float g, float b, float a ) { glColor4f( r, g, b, a ); }
+inline void color( float r, float g, float b, float a ) { Context::color(r, g, b, a); }
 //! Sets the current color, and the alpha value to 1.0
-inline void color( const Color8u &c ) { glColor4ub( c.r, c.g, c.b, 255 ); }
+inline void color( const Color8u &c ) { Context::color( c.r, c.g, c.b, 255 ); }
 //! Sets the current color and alpha value
-inline void color( const ColorA8u &c ) { glColor4ub( c.r, c.g, c.b, c.a ); }
+inline void color( const ColorA8u &c ) { Context::color( c.r, c.g, c.b, c.a ); }
 //! Sets the current color, and the alpha value to 1.0
-inline void color( const Color &c ) { glColor4f( c.r, c.g, c.b, 1.0f ); }
+inline void color( const Color &c ) { Context::color( c.r, c.g, c.b, 1.0f ); }
 //! Sets the current color and alpha value
-inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
+inline void color( const ColorA &c ) { Context::color( c.r, c.g, c.b, c.a ); }
 
 //! Enables the OpenGL State \a state. Equivalent to calling to glEnable( state );
 inline void enable( GLenum state ) { glEnable( state ); }
@@ -235,10 +237,16 @@ void draw( const class Sphere &sphere, int segments = 12 );
 void drawSolidCircle( const Vec2f &center, float radius, int numSegments = 0 );
 //! Renders a stroked circle using a line loop. The default value of zero for \a numSegments automatically determines a number of segments based on the circle's circumference.
 void drawStrokedCircle( const Vec2f &center, float radius, int numSegments = 0 );
+//! Renders a solid ellipse using triangle fans. The default value of zero for \a numSegments automatically determines a number of segments based on the ellipse's circumference.
+void drawSolidEllipse( const Vec2f &center, float radiusX, float radiusY, int numSegments = 0 );
+//! Renders a stroked circle using a line loop. The default value of zero for \a numSegments automatically determines a number of segments based on the circle's circumference.
+void drawStrokedEllipse( const Vec2f &center, float radiusX, float radiusY, int numSegments = 0 );
 //! Renders a solid rectangle. Texture coordinates in the range [0,1] are generated unless \a textureRectangle.
 void drawSolidRect( const Rectf &rect, bool textureRectangle = false );
 //! Renders a stroked rectangle.
 void drawStrokedRect( const Rectf &rect );
+void drawSolidRoundedRect( const Rectf &r, float cornerRadius, int numSegmentsPerCorner = 0 );
+void drawStrokedRoundedRect( const Rectf &r, float cornerRadius, int numSegmentsPerCorner = 0 );
 //! Renders a coordinate frame representation centered at the origin. Arrowheads are drawn at the end of each axis with radius \a headRadius and length \a headLength.
 void drawCoordinateFrame( float axisLength = 1.0f, float headLength = 0.2f, float headRadius = 0.05f );
 //! Draws a vector starting at \a start and ending at \a end. An arrowhead is drawn at the end of radius \a headRadius and length \a headLength.
@@ -258,9 +266,13 @@ void draw( const class Path2d &path2d, float approximationScale = 1.0f );
 //! Draws a Shape2d \a shape2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc
 void draw( const class Shape2d &shape2d, float approximationScale = 1.0f );
 
-//! Draws a solid (filled) Path2d \a path2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc
+#if ! defined( CINDER_GLES )
+//! Draws a solid (filled) Path2d \a path2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc. Performance warning: This routine tesselates the polygon into triangles. Consider using Triangulator directly.
 void drawSolid( const class Path2d &path2d, float approximationScale = 1.0f );
-
+//! Draws a solid (filled) Shape2d \a shape2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc. Performance warning: This routine tesselates the polygon into triangles. Consider using Triangulator directly.
+void drawSolid( const class Shape2d &shape2d, float approximationScale = 1.0f );
+//! Draws a solid (filled) PolyLine2f \a polyLine. Performance warning: This routine tesselates the polygon into triangles. Consider using Triangulator directly.
+void drawSolid( const PolyLine2f &polyLine );
 
 //! Draws a cinder::TriMesh \a mesh at the origin.
 void draw( const TriMesh2d &mesh );
@@ -277,6 +289,7 @@ void drawRange( const VboMesh &vbo, size_t startIndex, size_t indexCount, int ve
 //! Draws a range of elements from a cinder::gl::VboMesh \a vbo.
 void drawArrays( const VboMesh &vbo, GLint first, GLsizei count );
 //!	Draws a textured quad of size \a scale that is aligned with the vectors \a bbRight and \a bbUp at \a pos, rotated by \a rotationDegrees around the vector orthogonal to \a bbRight and \a bbUp.
+#endif
 
 void drawBillboard( const Vec3f &pos, const Vec2f &scale, float rotationDegrees, const Vec3f &bbRight, const Vec3f &bbUp );
 //! Draws \a texture on the XY-plane
@@ -287,6 +300,8 @@ void draw( const Texture &texture, const Vec2f &pos );
 void draw( const Texture &texture, const Rectf &rect );
 //! Draws the pixels inside \a srcArea of \a texture on the XY-plane in the rectangle defined by \a destRect
 void draw( const Texture &texture, const Area &srcArea, const Rectf &destRect );
+
+#endif // ! defined( CINDER_GLES2 )
 
 //! Draws a string \a str with its lower left corner located at \a pos. Optional \a font and \a color affect the style.
 void drawString( const std::string &str, const Vec2f &pos, const ColorA &color = ColorA( 1, 1, 1, 1 ), Font font = Font() );
@@ -313,7 +328,6 @@ struct BoolState {
 	GLboolean	mOldValue;
 };
 
-#if ! defined( CINDER_GLES2 )
 //! Convenience class designed to push and pop a boolean OpenGL state
 struct ClientBoolState {
 	ClientBoolState( GLint target );
@@ -330,7 +344,6 @@ struct SaveColorState {
   private:
 	GLfloat		mOldValues[4];
 };
-#endif
 
 //! Convenience class which pushes and pops the currently bound framebuffer
 struct SaveFramebufferBinding {

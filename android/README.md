@@ -68,6 +68,44 @@ See $NDK/docs/IMPORT-MODULE.html for more details of how to use
 NDK_MODULE_PATH.
 
 
+Orientation
+-----------
+
+Regardless of whether you use fixed or switchable orientation, always add
+"orientation" to the android:configChanges tag in AndroidManifest.xml.
+
+A change in orientation will trigger onResize() with the new viewport
+dimensions.  The actual orientation can be checked inside orientation by
+calling app->getOrientation().  See the TextureFont sample for an example
+of how to handle orientation changes.
+
+To use fixed orientation, add android:orientation="landscape" or "portrait" to
+the activity tag.
+
+Note that a fixed orientation app may be paused/restarted multiple times on
+resumption.  It is important that you handle resume() correctly and quickly.
+It is advisable to defer any heavy resource loading until the app starts its
+update/draw cycle.
+
+
+Activity lifecycle
+------------------
+
+OnStart  -> AppAndroid::setup()
+OnResume -> AppAndroid::resume(bool renewContext)
+
+If renewContext is true then the GL context has been renewed and all GL
+resources (textures, shaders) will need to be released and recreated.
+
+It is not sufficient to assign a stale shared pointer to a new value - you
+must first assign the stale reference to an empty reference.  See the
+samples for examples of this.
+
+The default implementation of resume() just calls setup() if renewContext
+is true.  This is unsuitable for non-trivial apps.
+
+TODO: saved state onPause / onResume.
+
 Status
 ------
 

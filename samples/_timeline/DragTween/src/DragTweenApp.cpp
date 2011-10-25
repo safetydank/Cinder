@@ -47,6 +47,7 @@ class DragTweenApp : public AppNative {
 	void mouseDrag( MouseEvent event );
 	void mouseUp( MouseEvent event );
 	void draw();
+    void resume(bool renewContext);
 	
 	// never use a vector with tweens
 	list<Circle>			mCircles;
@@ -64,6 +65,10 @@ void DragTweenApp::setup()
     gl::setMatricesWindow(getWindowWidth(), getWindowHeight());
 #endif
 
+#if defined( CINDER_ANDROID )
+    mCircles.clear();
+#endif
+
 	// setup the initial animation
 	const size_t numCircles = 35;
 	for( size_t c = 0; c < numCircles; ++c ) {
@@ -75,6 +80,16 @@ void DragTweenApp::setup()
 	}
 	
 	mCurrentDragCircle = 0;
+}
+
+void DragTweenApp::resume(bool renewContext)
+{
+    if (renewContext) {
+#if defined( CINDER_GLES2 )
+        mContext = gl::GlesContextRef();
+#endif
+        setup();
+    }
 }
 
 void DragTweenApp::mouseDown( MouseEvent event )

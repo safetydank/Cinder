@@ -6,6 +6,9 @@
 
 #if defined( CINDER_GLES2 )
 #include "cinder/gl/gles2.h"
+#endif
+
+#if defined( CINDER_ANDROID )
 #include "cinder/gl/TextureFont.h"
 #endif
 
@@ -54,7 +57,7 @@ struct EaseBox {
 #endif
 				
 		// draw graph
-#if ! defined( CINDER_GLES2 )
+#if ! defined( CINDER_ANDROID )
 		gl::color( ColorA( 0.25f, 0.5f, 1.0f, 0.5f ) );
 		glBegin( GL_LINE_STRIP );
 		for( float x = 0; x < mDrawRect.getWidth(); x += 0.25f ) {

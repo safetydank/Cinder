@@ -21,6 +21,9 @@ class TextureFontApp : public AppNative {
 	void mouseDown( MouseEvent event );
 	void keyDown( KeyEvent event );
 	void draw();
+#if defined( CINDER_ANDROID )
+    void resume( bool renewContext );
+#endif
 
 	Font				mFont;
 	gl::TextureFontRef	mTextureFont;
@@ -45,8 +48,24 @@ void TextureFontApp::setup()
 #else
 	mFont = Font( "Times New Roman", 24 );
 #endif
+
 	mTextureFont = gl::TextureFont::create( mFont );
 }
+
+#if defined( CINDER_ANDROID )
+void TextureFontApp::resume(bool renewContext)
+{
+    if (renewContext) {
+        //  Release GL resources
+        mContext.reset();
+        mTextureFont.reset();
+
+        //  Recreate GL resources
+        mContext = gl::setGlesContext();
+        mTextureFont = gl::TextureFont::create( mFont );
+    }
+}
+#endif
 
 void TextureFontApp::keyDown( KeyEvent event )
 {
@@ -69,6 +88,10 @@ void TextureFontApp::mouseDown( MouseEvent event )
 	mFont = Font( Font::getNames()[Rand::randInt() % Font::getNames().size()], mFont.getSize() );
 #endif
 	console() << mFont.getName() << std::endl;
+#if defined( CINDER_GLES2 )
+    gl::releaseGlesContext();
+    mContext = gl::setGlesContext();
+#endif
 	mTextureFont = gl::TextureFont::create( mFont );
 }
 

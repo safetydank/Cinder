@@ -8,11 +8,10 @@
     <uses-sdk android:minSdkVersion="8" />
 
     <application android:label="@string/app_name" android:hasCode="false">
-        <!-- android:screenOrientation="landscape" -->
 
         <activity android:name="android.app.NativeActivity"
                 android:label="@string/app_name"
-                android:configChanges="keyboardHidden|orientation"
+                android:configChanges="keyboardHidden"
                 android:screenOrientation="landscape"
                 android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
             <meta-data android:name="android.app.lib_name"
