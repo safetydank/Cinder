@@ -11,6 +11,7 @@ typedef std::shared_ptr<ES2Context> ES2ContextRef;
 class ES2Context
 {
 public:
+    //  Singleton
     static ES2ContextRef sContext;
 
     ~ES2Context()
@@ -28,6 +29,10 @@ public:
     }
 
     void unbind()
+    {
+    }
+
+    void enableClientState(GLenum cap)
     {
     }
 
@@ -50,6 +55,11 @@ void bind()
 void unbind()
 {
     GLES_CONTEXT_METHOD(unbind)
+}
+
+void enableClientState(GLenum cap)
+{
+    GLES_CONTEXT_METHOD(enableClientState, cap)
 }
 
 } } }
