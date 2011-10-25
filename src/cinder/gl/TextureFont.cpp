@@ -362,10 +362,10 @@ void TextureFont::drawGlyphs( const vector<pair<uint16_t,Vec2f> > &glyphMeasures
 	Vec2f baseline = baselineIn;
 
 // #if ! defined( CINDER_GLES2 )
-    Context::enableClientState( GL_VERTEX_ARRAY );
+    gl::enableClientState( GL_VERTEX_ARRAY );
 	if( ! colors.empty() )
-		Context::enableClientState( GL_COLOR_ARRAY );
-    Context::enableClientState( GL_TEXTURE_COORD_ARRAY );
+		gl::enableClientState( GL_COLOR_ARRAY );
+    gl::enableClientState( GL_TEXTURE_COORD_ARRAY );
 // #else
 //     GlesContextRef esContext = gl::getGlesContext();
 //     if (!esContext)  {
@@ -453,10 +453,10 @@ void TextureFont::drawGlyphs( const vector<pair<uint16_t,Vec2f> > &glyphMeasures
 		
 		curTex.bind();
 //#if ! defined( CINDER_GLES2 )
-        Context::vertexPointer( 2, GL_FLOAT, 0, &verts[0] );
-        Context::texCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
+        gl::vertexPointer( 2, GL_FLOAT, 0, &verts[0] );
+        gl::texCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
 		if( ! colors.empty() )
-			Context::colorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
+			gl::colorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
 // #else
 // 		glVertexAttribPointer( attr.mVertex, 3, GL_FLOAT, GL_FALSE, 0, &verts[0] );
 // 		glVertexAttribPointer( attr.mTexCoord, 2, GL_FLOAT, GL_FALSE, 0, &texCoords[0] );
@@ -484,10 +484,10 @@ void TextureFont::drawGlyphs( const std::vector<std::pair<uint16_t,Vec2f> > &gly
 	const float scale = options.getScale();
 
 // #if ! defined( CINDER_GLES2 )
-    Context::enableClientState( GL_VERTEX_ARRAY );
+    gl::enableClientState( GL_VERTEX_ARRAY );
 	if( ! colors.empty() )
-		Context::enableClientState( GL_COLOR_ARRAY );
-    Context::enableClientState( GL_TEXTURE_COORD_ARRAY );
+		gl::enableClientState( GL_COLOR_ARRAY );
+    gl::enableClientState( GL_TEXTURE_COORD_ARRAY );
 // #else
 //     GlesContextRef esContext = gl::getGlesContext();
 //     if ( ! esContext )  {
@@ -594,10 +594,10 @@ void TextureFont::drawGlyphs( const std::vector<std::pair<uint16_t,Vec2f> > &gly
 		
 		curTex.bind();
 // #if ! defined( CINDER_GLES2 )
-        Context::vertexPointer( 2, GL_FLOAT, 0, &verts[0] );
-        Context::texCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
+        gl::vertexPointer( 2, GL_FLOAT, 0, &verts[0] );
+        gl::texCoordPointer( 2, GL_FLOAT, 0, &texCoords[0] );
 		if( ! colors.empty() )
-			Context::colorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
+			gl::colorPointer( 4, GL_UNSIGNED_BYTE, 0, &vertColors[0] );
 // #else
 // 		glVertexAttribPointer( attr.mVertex, 3, GL_FLOAT, GL_FALSE, 0, &verts[0] );
 // 		glVertexAttribPointer( attr.mTexCoord, 2, GL_FLOAT, GL_FALSE, 0, &texCoords[0] );

@@ -467,10 +467,9 @@ LOCAL_SRC_FILES  := $(CINDER_SRC)/app/App.cpp \
 
 ifdef USE_GLES2
 LOCAL_SRC_FILES += $(CINDER_SRC)/gl/GlslProg.cpp \
-					$(CINDER_SRC)/gl/Vbo.cpp
+					$(CINDER_SRC)/gl/Vbo.cpp \
+ 					$(CINDER_SRC)/gl/gles2.cpp
 
-#					$(CINDER_SRC)/gl/gles2.cpp
-#
 LOCAL_CFLAGS += -DCINDER_GLES2
 GLES_LDLIB = -lGLESv2
 else

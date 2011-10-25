@@ -94,7 +94,7 @@ void setMatrices( const Camera &cam );
 void setModelView( const Camera &cam );
 //! Sets the \c PROJECTION matrix to reflect the values of \a cam. Leaves the \c MatrixMode as \c PROJECTION.
 void setProjection( const Camera &cam );
-
+//! Sets the \c PROJECTION matrix to the supplied matrix \a proj. Leaves the \c MatrixMode as \c PROJECTION.
 void setProjection( const Matrix44f &proj );
 
 //! Pushes the \c MODELVIEW matrix onto its stack, preserving the current values. Leaves the \c MatrixMode as \c MODELVIEW.
@@ -134,16 +134,16 @@ Area getViewport();
 void setViewport( const Area &area );
 
 //! Produces a translation by \a pos in the current matrix.
-void translate( const Vec2f &pos ) { Context::translate(pos); }
+void translate( const Vec2f &pos ) { context::translate(pos); }
 //! Produces a translation by \a x and \a y in the current matrix.
 inline void translate( float x, float y ) { translate( Vec2f( x, y ) ); }
 //! Produces a translation by \a pos in the current matrix.
-void translate( const Vec3f &pos ) { Context::translate(pos); }
+void translate( const Vec3f &pos ) { context::translate(pos); }
 //! Produces a translation by \a x, \a y and \a z in the current matrix.
 inline void translate( float x, float y, float z ) { translate( Vec3f( x, y, z ) ); }
 
 //! Produces a scale by \a scale in the current matrix.
-void scale( const Vec3f &scl ) { Context::scale(scl); }
+void scale( const Vec3f &scl ) { context::scale(scl); }
 //! Produces a scale by \a scl in the current matrix.
 inline void scale( const Vec2f &scl ) { scale( Vec3f( scl.x, scl.y, 0 ) ); }
 //! Produces a scale by \a x and \a y in the current matrix.
@@ -152,9 +152,9 @@ inline void scale( float x, float y ) { scale( Vec3f( x, y, 0 ) ); }
 inline void scale( float x, float y, float z ) { scale( Vec3f( x, y, z ) ); }
 
 //! Produces a rotation around the X-axis by \a xyz.x degrees, the Y-axis by \a xyz.y degrees and the Z-axis by \a xyz.z degrees in the current matrix. Processed in X-Y-Z order.
-void rotate( const Vec3f &xyz ) { Context::rotate(xyz); }
+void rotate( const Vec3f &xyz ) { context::rotate(xyz); }
 //! Produces a rotation by the quaternion \a quat in the current matrix.
-void rotate( const Quatf &quat ) { Context::rotate(quat); }
+void rotate( const Quatf &quat ) { context::rotate(quat); }
 //! Produces a 2D rotation, the equivalent of a rotation around the Z axis by \a degrees.
 inline void rotate( float degrees ) { rotate( Vec3f( 0, 0, degrees ) ); }
 
@@ -170,17 +170,17 @@ inline void vertex( float x, float y, float z ) { glVertex3f( x, y, z ); }
 #endif // ! defined( CINDER_GLES )
 
 //! Sets the current color and the alpha value to 1.0
-inline void color( float r, float g, float b ) { Context::color(r, g, b); }
+inline void color( float r, float g, float b ) { context::color(r, g, b); }
 //! Sets the current color and alpha value
-inline void color( float r, float g, float b, float a ) { Context::color(r, g, b, a); }
+inline void color( float r, float g, float b, float a ) { context::color(r, g, b, a); }
 //! Sets the current color, and the alpha value to 1.0
-inline void color( const Color8u &c ) { Context::color( c.r, c.g, c.b, 255 ); }
+inline void color( const Color8u &c ) { context::color( c.r, c.g, c.b, 255 ); }
 //! Sets the current color and alpha value
-inline void color( const ColorA8u &c ) { Context::color( c.r, c.g, c.b, c.a ); }
+inline void color( const ColorA8u &c ) { context::color( c.r, c.g, c.b, c.a ); }
 //! Sets the current color, and the alpha value to 1.0
-inline void color( const Color &c ) { Context::color( c.r, c.g, c.b, 1.0f ); }
+inline void color( const Color &c ) { context::color( c.r, c.g, c.b, 1.0f ); }
 //! Sets the current color and alpha value
-inline void color( const ColorA &c ) { Context::color( c.r, c.g, c.b, c.a ); }
+inline void color( const ColorA &c ) { context::color( c.r, c.g, c.b, c.a ); }
 
 //! Enables the OpenGL State \a state. Equivalent to calling to glEnable( state );
 inline void enable( GLenum state ) { glEnable( state ); }
@@ -215,6 +215,30 @@ void disableDepthWrite();
 void enableDepthRead( bool enable = true );
 //! Enables writing to the depth buffer when \a enable.
 void enableDepthWrite( bool enable = true );
+
+//  Context inlines, implemented differently by GL/GLES2
+
+//  Initialization and shader binding used by GLES2
+inline void initialize() { context::initialize(); }
+inline void bind()       { context::bind(); }
+inline void unbind()     { context::unbind(); }
+
+inline void enableClientState(GLenum cap) { context::enableClientState(cap); }
+
+inline void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    context::vertexPointer(size, type, stride, pointer);
+}
+inline void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    context::texCoordPointer(size, type, stride, pointer);
+}
+inline void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    context::colorPointer(size, type, stride, pointer);
+}
+inline void normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+    context::normalPointer(size, type, stride, pointer);
+}
+
+//  End context operations
 
 #if ! defined( CINDER_GLES2 )
 //! Draws a line from \a start to \a end
