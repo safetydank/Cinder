@@ -1694,6 +1694,7 @@ void rotate( const Quatf &quat )
 // }
 // 
 // void draw( const class Shape2d &shape2d, float approximationScale )
+>>>>>>> 9ef88dba0edeadba951ecefdc5b8f2b93427b313
 // {
 //     if (sContext) sContext->attr().draw(shape2d, approximationScale);
 // }
