@@ -27,16 +27,17 @@ class TextureFontApp : public AppNative {
 
 	Font				mFont;
 	gl::TextureFontRef	mTextureFont;
-#if defined( CINDER_GLES2 )
-    gl::GlesContextRef  mContext;
-#endif
+// #if defined( CINDER_GLES2 )
+//     gl::GlesContextRef  mContext;
+// #endif
 };
 
 void TextureFontApp::setup()
 {
-#if defined( CINDER_GLES2 )
-    mContext = gl::setGlesContext();
-#endif
+    gl::context::initialize();
+// #if defined( CINDER_GLES2 )
+//     mContext = gl::setGlesContext();
+// #endif
 
 #if defined( CINDER_COCOA_TOUCH )
 	mFont = Font( "Cochin-Italic", 24 );
@@ -57,11 +58,12 @@ void TextureFontApp::resume(bool renewContext)
 {
     if (renewContext) {
         //  Release GL resources
-        mContext.reset();
+        // mContext.reset();
         mTextureFont.reset();
 
         //  Recreate GL resources
-        mContext = gl::setGlesContext();
+        // mContext = gl::setGlesContext();
+        gl::context::initialize();
         mTextureFont = gl::TextureFont::create( mFont );
     }
 }
@@ -97,9 +99,10 @@ void TextureFontApp::mouseDown( MouseEvent event )
 
 void TextureFontApp::draw()
 {
-#if defined( CINDER_GLES2 )
-    mContext->bind();
-#endif
+// #if defined( CINDER_GLES2 )
+//     mContext->bind();
+// #endif
+    gl::context::bind();
 
 	gl::setMatricesWindow( getWindowSize() );
 	gl::enableAlphaBlending();
@@ -125,9 +128,10 @@ void TextureFontApp::draw()
 	float fontNameWidth = mTextureFont->measureString( mTextureFont->getName() ).x;
 	mTextureFont->drawString( mTextureFont->getName(), Vec2f( getWindowWidth() - fontNameWidth - 10, getWindowHeight() - mTextureFont->getDescent() ) );
 
-#if defined( CINDER_GLES2 )
-    mContext->unbind();
-#endif
+// #if defined( CINDER_GLES2 )
+//     mContext->unbind();
+// #endif
+    gl::context::unbind();
 }
 
 CINDER_APP_NATIVE( TextureFontApp, RendererGl(0) )

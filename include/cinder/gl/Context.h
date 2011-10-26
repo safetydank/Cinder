@@ -37,10 +37,12 @@ inline void drawArrays(GLenum mode, GLint first, GLsizei count)
     glDrawArrays(mode, first, count);
 }
 
+#if ! defined( CINDER_GLES1 )
 inline void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
     glDrawRangeElements(mode, start, end, count, type, indices);
 }
+#endif
 
 
 inline void color( float r, float g, float b ) { glColor4f( r, g, b, 1.0f ); }
@@ -49,14 +51,6 @@ inline void color( const Color8u &c ) { glColor4ub( c.r, c.g, c.b, 255 ); }
 inline void color( const ColorA8u &c ) { glColor4ub( c.r, c.g, c.b, c.a ); }
 inline void color( const Color &c ) { glColor4f( c.r, c.g, c.b, 1.0f ); }
 inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
-
-inline void translate( const Vec2f &pos ) { glTranslatef( pos.x, pos.y, 0 ); }
-inline void translate( const Vec3f &pos ) { glTranslatef( pos.x, pos.y, pos.z ); }
-
-inline void scale( const Vec3f &scl ) { glScalef( scl.x, scl.y, scl.z ); }
-
-void rotate( const Vec3f &xyz );
-void rotate( const Quatf &quat );
 
 #endif
 
@@ -92,14 +86,6 @@ void color( const Color8u &c );
 void color( const ColorA8u &c );
 void color( const Color &c );
 void color( const ColorA &c );
-
-void translate( const Vec2f &pos );
-void translate( const Vec3f &pos );
-
-void scale( const Vec3f &scl );
-
-void rotate( const Vec3f &xyz );
-void rotate( const Quatf &quat );
 
 #endif
 

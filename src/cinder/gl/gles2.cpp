@@ -5,7 +5,9 @@
 #include "cinder/gl/Texture.h"
 #include "cinder/Camera.h"
 
-namespace cinder { namespace gl { namespace context {
+namespace cinder { namespace gl { 
+
+namespace context {
 
 class ES2Context;
 typedef std::shared_ptr<ES2Context> ES2ContextRef;
@@ -265,9 +267,11 @@ protected:
     }
 };
 
+} // namespace context
+
 //  Context implementation of gl.h methods delegate to static ES2Context instance
-#define GLES_CONTEXT_METHOD(FN, ...) assert(ES2Context::sContext); ES2Context::sContext->FN(__VA_ARGS__);
-#define GLES_CONTEXT_METHOD_R(FN, ...) assert(ES2Context::sContext); return ES2Context::sContext->FN(__VA_ARGS__);
+#define GLES_CONTEXT_METHOD(FN, ...) assert(context::ES2Context::sContext); context::ES2Context::sContext->FN(__VA_ARGS__);
+#define GLES_CONTEXT_METHOD_R(FN, ...) assert(context::ES2Context::sContext); return context::ES2Context::sContext->FN(__VA_ARGS__);
 
 void initialize() 
 { 
@@ -424,7 +428,7 @@ void rotate( const Quatf &quat )
     GLES_CONTEXT_METHOD(rotate, quat)
 }
 
-} } }
+} }
 
 
 // #include "cinder/gl/Context.h"
