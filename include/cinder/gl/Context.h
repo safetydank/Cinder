@@ -41,6 +41,10 @@ inline void scale( const Vec3f &scl ) { glScalef( scl.x, scl.y, scl.z ); }
 void rotate( const Vec3f &xyz );
 void rotate( const Quatf &quat );
 
+void drawElements();
+void drawArrays();
+void drawRangeElements();
+
 #endif
 
 #if defined( CINDER_GLES2 )
