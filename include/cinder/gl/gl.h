@@ -216,31 +216,8 @@ void enableDepthRead( bool enable = true );
 //! Enables writing to the depth buffer when \a enable.
 void enableDepthWrite( bool enable = true );
 
-//  Context inlines, implemented differently by GL/GLES2
-
-//  Initialization and shader binding used by GLES2
-inline void initialize() { context::initialize(); }
-inline void bind()       { context::bind(); }
-inline void unbind()     { context::unbind(); }
-
-inline void enableClientState(GLenum cap) { context::enableClientState(cap); }
-
-inline void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
-    context::vertexPointer(size, type, stride, pointer);
-}
-inline void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
-    context::texCoordPointer(size, type, stride, pointer);
-}
-inline void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
-    context::colorPointer(size, type, stride, pointer);
-}
-inline void normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
-    context::normalPointer(size, type, stride, pointer);
-}
-
 //  End context operations
 
-#if ! defined( CINDER_GLES2 )
 //! Draws a line from \a start to \a end
 void drawLine( const Vec2f &start, const Vec2f &end );
 //! Draws a line from \a start to \a end
@@ -290,7 +267,7 @@ void draw( const class Path2d &path2d, float approximationScale = 1.0f );
 //! Draws a Shape2d \a shape2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc
 void draw( const class Shape2d &shape2d, float approximationScale = 1.0f );
 
-#if ! defined( CINDER_GLES )
+#if ! defined( CINDER_GLES1 )
 //! Draws a solid (filled) Path2d \a path2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc. Performance warning: This routine tesselates the polygon into triangles. Consider using Triangulator directly.
 void drawSolid( const class Path2d &path2d, float approximationScale = 1.0f );
 //! Draws a solid (filled) Shape2d \a shape2d using approximation scale \a approximationScale. 1.0 corresponds to screenspace, 2.0 is double screen resolution, etc. Performance warning: This routine tesselates the polygon into triangles. Consider using Triangulator directly.
@@ -324,8 +301,6 @@ void draw( const Texture &texture, const Vec2f &pos );
 void draw( const Texture &texture, const Rectf &rect );
 //! Draws the pixels inside \a srcArea of \a texture on the XY-plane in the rectangle defined by \a destRect
 void draw( const Texture &texture, const Area &srcArea, const Rectf &destRect );
-
-#endif // ! defined( CINDER_GLES2 )
 
 //! Draws a string \a str with its lower left corner located at \a pos. Optional \a font and \a color affect the style.
 void drawString( const std::string &str, const Vec2f &pos, const ColorA &color = ColorA( 1, 1, 1, 1 ), Font font = Font() );

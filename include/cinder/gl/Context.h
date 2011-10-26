@@ -11,20 +11,37 @@ inline void initialize() {}
 inline void bind()       {}
 inline void unbind()     {}
 
-void enableClientState(GLenum cap) { glEnableClientState(cap); }
+inline void enableClientState(GLenum cap) { glEnableClientState(cap); }
+inline void disableClientState(GLenum cap) { glDisableClientState(cap); }
 
-void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+inline void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
     glVertexPointer(size, type, stride, pointer);
 }
-void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+inline void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
     glTexCoordPointer(size, type, stride, pointer);
 }
-void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
+inline void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
     glColorPointer(size, type, stride, pointer);
 }
-void normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
-    glNormalPointer(size, type, stride, pointer);
+inline void normalPointer(GLenum type, GLsizei stride, const GLvoid* pointer) {
+    glNormalPointer(type, stride, pointer);
 }
+
+inline void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
+{
+    glDrawElements(mode, count, type, indices);
+}
+
+inline void drawArrays(GLenum mode, GLint first, GLsizei count)
+{
+    glDrawArrays(mode, first, count);
+}
+
+inline void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+{
+    glDrawRangeElements(mode, start, end, count, type, indices);
+}
+
 
 inline void color( float r, float g, float b ) { glColor4f( r, g, b, 1.0f ); }
 inline void color( float r, float g, float b, float a ) { glColor4f( r, g, b, a ); }
@@ -40,10 +57,6 @@ inline void scale( const Vec3f &scl ) { glScalef( scl.x, scl.y, scl.z ); }
 
 void rotate( const Vec3f &xyz );
 void rotate( const Quatf &quat );
-
-void drawElements();
-void drawArrays();
-void drawRangeElements();
 
 #endif
 
@@ -62,11 +75,16 @@ void bind();
 void unbind();
 
 void enableClientState(GLenum cap);
+void disableClientState(GLenum cap);
 
 void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
-void normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
+void normalPointer(GLenum type, GLsizei stride, const GLvoid* pointer);
+
+void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
+void drawArrays(GLenum mode, GLint first, GLsizei count);
+void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
 
 void color( float r, float g, float b );
 void color( float r, float g, float b, float a );
