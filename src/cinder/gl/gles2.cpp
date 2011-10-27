@@ -39,10 +39,6 @@ public:
         mShader.unbind();
     }
 
-    void enableClientState(GLenum cap)
-    {
-    }
-
     void color( float r, float g, float b ) { mColor = Color(r, g, b); }
     void color( float r, float g, float b, float a ) { mColor = ColorA(r, g, b, a); }
     void color( const Color8u &c ) { mColor = c; }
@@ -50,41 +46,87 @@ public:
     void color( const Color &c ) { mColor = c; }
     void color( const ColorA &c ) { mColor = c; }
 
+    void enableClientState(GLenum cap)
+    {
+    }
+    
+    void disableClientState(GLenum cap)
+    {
+    }
+
+    void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+    {
+        int attr = 0;
+        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+    }
+
+    void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+    {
+        int attr = 0;
+        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+    }
+
+    void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+    {
+        int attr = 0;
+        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+    }
+
+    void normalPointer(GLenum type, GLsizei stride, const GLvoid* pointer)
+    {
+        int attr = 0;
+        int size = 3;
+        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+    }
+
+    void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)
+    {
+        updateUniforms();
+        glDrawElements(mode, count, type, indices);
+    }
+
+    void drawArrays(GLenum mode, GLint first, GLsizei count)
+    {
+        updateUniforms();
+        glDrawArrays(mode, first, count);
+    }
+
+    void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
+    {
+        updateUniforms();
+        glDrawElements(mode, count, type, indices);
+    }
+
     void setMatrices( const Camera &cam )
     {
         mModelView = cam.getModelViewMatrix();
         mModelViewDirty = true;
         mProj = cam.getProjectionMatrix();
         mProjDirty = true;
-        updateUniforms();
     }
     
     void setModelView( const Camera &cam )
     {
         mModelView = cam.getModelViewMatrix();
         mModelViewDirty = true;
-        updateUniforms();
     }
     
     void setProjection( const Camera &cam )
     {
         mProj = cam.getProjectionMatrix();
         mProjDirty = true;
-        updateUniforms();
     }
     
     void setProjection( const Matrix44f &proj )
     {
         mProj = proj;
         mProjDirty = true;
-        updateUniforms();
     }
     
     void pushModelView()
     {
         mModelViewStack.push_back(mModelView);
         mModelViewDirty = true;
-        updateUniforms();
     }
     
     void popModelView()
@@ -93,7 +135,6 @@ public:
             mModelView = mModelViewStack.back();
             mModelViewStack.pop_back();
             mModelViewDirty = true;
-            updateUniforms();
         }
     }
     
@@ -101,14 +142,12 @@ public:
     {
         mModelViewStack.push_back(cam.getModelViewMatrix().m);
         mModelViewDirty = true;
-        updateUniforms();
     }
     
     void pushProjection( const Camera &cam )
     {
         mProjStack.push_back(mProj);
         mProjDirty = true;
-        updateUniforms();
     }
     
     void pushMatrices()
@@ -117,7 +156,6 @@ public:
         mModelViewDirty = true;
         mProjStack.push_back(mProj);
         mProjDirty = true;
-        updateUniforms();
     }
     
     void popMatrices()
@@ -132,23 +170,18 @@ public:
             mProjStack.pop_back();
             mProjDirty = true;
         }
-    
-        if (mModelViewDirty || mProjDirty)
-            updateUniforms();
     }
     
     void multModelView( const Matrix44f &mtx )
     {
         mModelView *= mtx;
         mModelViewDirty = true;
-        updateUniforms();
     }
     
     void multProjection( const Matrix44f &mtx )
     {
         mProj *= mtx;
         mProjDirty = true;
-        updateUniforms();
     }
     
     Matrix44f getModelView()
@@ -175,7 +208,6 @@ public:
         }
 
         mProjDirty = mModelViewDirty = true;
-        updateUniforms();
     }
 
     void setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft)
@@ -194,14 +226,12 @@ public:
         glViewport( 0, 0, screenWidth, screenHeight );
 
         mProjDirty = mModelViewDirty = true;
-        updateUniforms();
     }
 
     void translate( const Vec2f &pos )
     {
         mModelView.translate(Vec3f(pos.x, pos.y, 0));
         mModelViewDirty = true;
-        updateUniforms();
     }
 
     void translate(float x, float y, float z)
@@ -213,14 +243,12 @@ public:
     {
         mModelView.translate(pos);
         mModelViewDirty = true;
-        updateUniforms();
     }
 
     void scale( const Vec3f &scl )
     {
         mModelView.scale(scl);
         mModelViewDirty = true;
-        updateUniforms();
     }
 
     void rotate( const Vec3f &xyz )
@@ -228,7 +256,6 @@ public:
         Vec3f xyzrad(toRadians(xyz.x), toRadians(xyz.y), toRadians(xyz.z));
         mModelView.rotate(xyzrad);
         mModelViewDirty = true;
-        updateUniforms();
     }
 
     void rotate( const Quatf &quat )
@@ -239,7 +266,6 @@ public:
         if( math<float>::abs( angle ) > EPSILON_VALUE ) {
             mModelView.rotate( Vec3f(axis.x, axis.y, axis.z), angle );
             mModelViewDirty = true;
-            updateUniforms();
         }
     }
 
@@ -262,6 +288,7 @@ protected:
     {
     }
 
+    //  Update shader uniforms
     void updateUniforms()
     {
     }
@@ -292,6 +319,32 @@ void enableClientState(GLenum cap)
 {
     GLES_CONTEXT_METHOD(enableClientState, cap)
 }
+
+void disableClientState(GLenum cap)
+{
+    GLES_CONTEXT_METHOD(disableClientState, cap)
+}
+
+void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+{
+    GLES_CONTEXT_METHOD(vertexPointer, size, type, stride, pointer);
+}
+
+void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+{
+    GLES_CONTEXT_METHOD(texCoordPointer, size, type, stride, pointer)
+}
+
+void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+{
+    GLES_CONTEXT_METHOD(colorPointer, size, type, stride, pointer)
+}
+
+void normalPointer(GLenum type, GLsizei stride, const GLvoid* pointer)
+{
+    GLES_CONTEXT_METHOD(normalPointer, type, stride, pointer)
+}
+
 
 namespace context {
 

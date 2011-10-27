@@ -78,6 +78,7 @@ void normalPointer(GLenum type, GLsizei stride, const GLvoid* pointer);
 
 void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices);
 void drawArrays(GLenum mode, GLint first, GLsizei count);
+//! GLES2 implementation of drawRangeElements ignores the start and end arguments
 void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
 
 void color( float r, float g, float b );
