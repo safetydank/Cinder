@@ -4,9 +4,9 @@
 
 namespace cinder { namespace gl { namespace context {
 
+//  OpenGL / GLES1 implementation
 #if ! defined( CINDER_GLES2 )
 
-//  OpenGL / GLES1 implementation
 inline void initialize() {}
 inline void bind()       {}
 inline void unbind()     {}
@@ -54,10 +54,11 @@ inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
 
 #endif
 
+//  OpenGL ES2 implementation
 #if defined( CINDER_GLES2 )
 
 //  Compatibility constants
-#if ! defined(GL_VERTEX_ARRAY)
+#if ! defined( GL_VERTEX_ARRAY )
    #define GL_VERTEX_ARRAY                   0x8074
    #define GL_NORMAL_ARRAY                   0x8075
    #define GL_COLOR_ARRAY                    0x8076
