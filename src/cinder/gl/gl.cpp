@@ -420,6 +420,7 @@ void enableAdditiveBlending()
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE );	
 }
 
+#if ! defined( CINDER_GLES2 )
 void enableAlphaTest( float value, int func )
 {
 	glEnable( GL_ALPHA_TEST );
@@ -430,6 +431,7 @@ void disableAlphaTest()
 {
 	glDisable( GL_ALPHA_TEST );
 }
+#endif
 
 #if ! defined( CINDER_GLES )
 void enableWireframe()

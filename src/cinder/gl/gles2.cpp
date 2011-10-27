@@ -293,35 +293,39 @@ void enableClientState(GLenum cap)
     GLES_CONTEXT_METHOD(enableClientState, cap)
 }
 
-void color( float r, float g, float b )
-{
-    GLES_CONTEXT_METHOD(color, r, g, b)
-}
+namespace context {
 
-void color( float r, float g, float b, float a )
-{
-    GLES_CONTEXT_METHOD(color, r, g, b, a)
-}
+    void color( float r, float g, float b )
+    {
+        GLES_CONTEXT_METHOD(color, r, g, b)
+    }
 
-void color( const Color8u &c )
-{
-    GLES_CONTEXT_METHOD(color, c)
-}
+    void color( float r, float g, float b, float a )
+    {
+        GLES_CONTEXT_METHOD(color, r, g, b, a)
+    }
 
-void color( const ColorA8u &c )
-{
-    GLES_CONTEXT_METHOD(color, c)
-}
+    void color( const Color8u &c )
+    {
+        GLES_CONTEXT_METHOD(color, c)
+    }
 
-void color( const Color &c )
-{
-    GLES_CONTEXT_METHOD(color, c)
-}
+    void color( const ColorA8u &c )
+    {
+        GLES_CONTEXT_METHOD(color, c)
+    }
 
-void color( const ColorA &c )
-{
-    GLES_CONTEXT_METHOD(color, c)
-}
+    void color( const Color &c )
+    {
+        GLES_CONTEXT_METHOD(color, c)
+    }
+
+    void color( const ColorA &c )
+    {
+        GLES_CONTEXT_METHOD(color, c)
+    }
+
+} // namespace context 
 
 void setMatrices( const Camera &cam )
 {
