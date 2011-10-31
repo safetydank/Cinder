@@ -12,8 +12,142 @@ namespace context {
 class ES2Context;
 typedef std::shared_ptr<ES2Context> ES2ContextRef;
 
+// const char* CinderProgES2::verts = 
+//         "attribute vec3 aPosition;\n"
+//         "attribute vec4 aColor;\n"
+//         "attribute vec2 aTexCoord;\n"
+// 
+//         "uniform mat4 uProjection;\n"
+//         "uniform mat4 uModelView;\n"
+//         "uniform vec4 uVertexColor;\n"
+// 
+//         "uniform bool uHasVertexAttr;\n"
+//         "uniform bool uHasTexCoordAttr;\n"
+//         "uniform bool uHasColorAttr;\n"
+//         "uniform bool uHasNormalAttr;\n"
+// 
+//         "varying vec4 vColor;\n"
+//         "varying vec2 vTexCoord;\n"
+// 
+//         "void main() {\n"
+//         "  vColor = uVertexColor;\n"
+//         "  if (uHasColorAttr) {\n"
+//         "    vColor *= aColor;\n"
+//         "  }\n"
+//         "  if (uHasTexCoordAttr) {\n"
+//         "    vTexCoord = aTexCoord;\n"
+//         "  }\n"
+//         "  gl_Position = uProjection * uModelView * vec4(aPosition, 1.0);\n"
+//         "}\n";
+// 
+// const char* CinderProgES2::frags = 
+//         "precision mediump float;\n"
+// 
+//         "uniform bool uHasTexCoordAttr;\n"
+//         "uniform sampler2D sTexture;\n"
+// 
+//         "varying vec4 vColor;\n"
+//         "varying vec2 vTexCoord;\n"
+// 
+//         "void main() {\n"
+//         "    if (uHasTexCoordAttr) {\n"
+//         "      gl_FragColor = vColor * texture2D(sTexture, vTexCoord);\n"
+//         "    }\n"
+//         "    else {\n"
+//         "      gl_FragColor = vColor;\n"
+//         "    }\n"
+//         "}\n";
+// 
+
+enum {
+    ATTR_POSITION = 0,
+    ATTR_NORMAL,
+    ATTR_COLOR,
+    ATTR_TEXCOORD0,
+    ATTR_TEXCOORD1,
+    ATTR_TEXCOORD2,
+    ATTR_COUNT
+};
+
+
+struct ES2Attribute
+{
+    int     size;
+    GLenum  type;
+    GLsizei stride;
+    void*   pointer;
+
+    int   id
+    GLint location;
+    bool  enabled;
+
+    ES2Attribute() : size(0), type(0), GLsizei(0), pointer(0), id(0), location(0), enabled(false)
+    {
+    }
+
+    void set(GLint size, GLenum type, GLsizei stride, const void *pointer)
+    {
+        this->size    = size;
+        this->type    = type;
+        this->stride  = stride;
+        this->pointer = pointer;
+    }
+
+    void upload()
+    {
+    }
+};
+
 class ES2Context
 {
+protected:
+    GlslProg mShader;
+    std::vector<Attribute> mAttributes;
+
+    std::vector<Matrix44f> mModelViewStack;
+    std::vector<Matrix44f> mProjStack;
+
+    Matrix44f mProj;
+    Matrix44f mModelView;
+    ColorA    mColor;
+    int       mActiveTexture;
+    Texture   mTexture;
+
+    bool mProjDirty;
+    bool mModelViewDirty;
+
+    ES2Context() : mActiveTexture(0)
+    {
+    }
+
+    int attributeId(GLenum cap)
+    {
+        int capId;
+        switch (cap) {
+            case GL_VERTEX_ARRAY:
+                capId = ATTR_POSITION;
+                break;
+            case GL_COLOR_ARRAY:
+                capId = ATTR_COLOR;
+                break;
+            case GL_TEXTURE_COORD_ARRAY:
+                capId = ATTR_TEXCOORD0 + mActiveTexture;
+                break;
+            case GL_NORMAL_ARRAY:
+                capId = ATTR_NORMAL;
+                break;
+            default:
+                capId = -1;
+                break;
+        }
+
+        return capId;
+    }
+
+    //  Update shader uniforms
+    void updateUniforms()
+    {
+    }
 public:
     //  Singleton
     static ES2ContextRef sContext;
@@ -48,10 +182,16 @@ public:
 
     void enableClientState(GLenum cap)
     {
+        int capId = attributeId(cap);
+        if (capId >= 0)
+            mAttributes[capId]->enabled = true;
     }
     
     void disableClientState(GLenum cap)
     {
+        int capId = attributeId(cap);
+        if (capId >= 0)
+            mAttributes[capId]->enabled = false;
     }
 
     void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
@@ -269,28 +409,9 @@ public:
         }
     }
 
-protected:
-    GlslProg mShader;
-
-    std::vector<Matrix44f> mModelViewStack;
-    std::vector<Matrix44f> mProjStack;
-
-    Matrix44f mProj;
-    Matrix44f mModelView;
-    ColorA    mColor;
-    Texture   mTexture;
-    uint32_t  mActiveAttrs;
-
-    bool mProjDirty;
-    bool mModelViewDirty;
-
-    ES2Context()
+    Attribute& attribute(int id) 
     {
-    }
-
-    //  Update shader uniforms
-    void updateUniforms()
-    {
+        return mAttributes(id);
     }
 };
 
