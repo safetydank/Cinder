@@ -128,9 +128,11 @@ std::string getTemporaryDirectory()
 
 	std::wstring wideResult( tempPath.begin(), tempPath.begin() + static_cast<std::size_t>(result) );
 	return toUtf8( wideResult );
-#endif
+#elif defined( CINDER_ANDROID )
+    // XXX ANDROID
 	string result;
 	return result;
+#endif
 }
 
 std::string getTemporaryFilePath( const std::string &prefix )
@@ -155,9 +157,11 @@ std::string getTemporaryFilePath( const std::string &prefix )
 		throw std::runtime_error( "Could not create temporary file path" );
 
 	return toUtf8( tempFileName );
-#endif
+#elif defined( CINDER_ANDROID )
+    // XXX ANDROID
 	string result;
 	return result;
+#endif
 }
 
 std::string getPathDirectory( const std::string &path )

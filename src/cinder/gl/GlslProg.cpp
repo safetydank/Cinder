@@ -53,7 +53,8 @@ GlslProg::Obj::~Obj()
 #if defined( CINDER_GLES )
 GlslProg::GlslProg( DataSourceRef vertexShader, DataSourceRef fragmentShader )
 #else
-GlslProg::GlslProg( DataSourceRef vertexShader, DataSourceRef fragmentShader, DataSourceRef geometryShader )
+GlslProg::GlslProg( DataSourceRef vertexShader, DataSourceRef fragmentShader, DataSourceRef geometryShader,
+    GLint geometryInputType, GLint geometryOutputType, GLint geometryOutputVertices)
 #endif
 	: mObj( shared_ptr<Obj>( new Obj ) )
 {
@@ -81,7 +82,8 @@ GlslProg::GlslProg( DataSourceRef vertexShader, DataSourceRef fragmentShader, Da
 #if defined( CINDER_GLES )
 GlslProg::GlslProg( const char *vertexShader, const char *fragmentShader )
 #else
-GlslProg::GlslProg( const char *vertexShader, const char *fragmentShader, const char *geometryShader )
+GlslProg::GlslProg( const char *vertexShader, const char *fragmentShader, const char *geometryShader,
+    GLint geometryInputType, GLint geometryOutputType, GLint geometryOutputVertices)
 #endif
 	: mObj( shared_ptr<Obj>( new Obj ) )
 {
