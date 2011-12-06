@@ -77,15 +77,15 @@ struct ES2Attribute
     GLsizei stride;
     void*   pointer;
 
-    int   id
+    int   id;
     GLint location;
     bool  enabled;
 
-    ES2Attribute() : size(0), type(0), GLsizei(0), pointer(0), id(0), location(0), enabled(false)
+    ES2Attribute() : size(0), type(0), stride(0), pointer(0), id(0), location(0), enabled(false)
     {
     }
 
-    void set(GLint size, GLenum type, GLsizei stride, const void *pointer)
+    void set(GLint size, GLenum type, GLsizei stride, void* pointer)
     {
         this->size    = size;
         this->type    = type;
@@ -102,7 +102,7 @@ class ES2Context
 {
 protected:
     GlslProg mShader;
-    std::vector<Attribute> mAttributes;
+    std::vector<ES2Attribute> mAttributes;
 
     std::vector<Matrix44f> mModelViewStack;
     std::vector<Matrix44f> mProjStack;
@@ -184,14 +184,14 @@ public:
     {
         int capId = attributeId(cap);
         if (capId >= 0)
-            mAttributes[capId]->enabled = true;
+            mAttributes[capId].enabled = true;
     }
     
     void disableClientState(GLenum cap)
     {
         int capId = attributeId(cap);
         if (capId >= 0)
-            mAttributes[capId]->enabled = false;
+            mAttributes[capId].enabled = false;
     }
 
     void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
@@ -409,9 +409,9 @@ public:
         }
     }
 
-    Attribute& attribute(int id) 
+    ES2Attribute& attribute(int id) 
     {
-        return mAttributes(id);
+        return mAttributes[id];
     }
 };
 
