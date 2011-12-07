@@ -58,11 +58,11 @@
 #elif defined( CINDER_MAC )
 	#include <OpenGL/gl.h>
 #elif defined( CINDER_ANDROID )
+    #define GL_GLEXT_PROTOTYPES
 	#if defined( CINDER_GLES1 )
 		#include <GLES/gl.h>
 		#include <GLES/glext.h>
 	#elif defined( CINDER_GLES2 )
-		#define GL_GLEXT_PROTOTYPES
 		#include <GLES2/gl2.h>
 		#include <GLES2/gl2ext.h>
 	#else

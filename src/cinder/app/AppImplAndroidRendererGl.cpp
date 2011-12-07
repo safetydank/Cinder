@@ -56,14 +56,15 @@ AppImplAndroidRendererGl::AppImplAndroidRendererGl( App *aApp, struct android_ap
 
 void AppImplAndroidRendererGl::initialize( int32_t& width, int32_t& height )
 {
-    CI_LOGW("XXX AppImplAndroidRendererGl::initialize");
-
     //  Create GL context and surface
     const EGLint attribs[] = {
             EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
             EGL_BLUE_SIZE, 5,
             EGL_GREEN_SIZE, 6,
             EGL_RED_SIZE, 5,
+#if defined( CINDER_GLES2 )
+            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+#endif
             EGL_NONE
     };
 
@@ -91,6 +92,7 @@ void AppImplAndroidRendererGl::initialize( int32_t& width, int32_t& height )
 #else
     mContext = eglCreateContext(mDisplay, config, NULL, NULL);
 #endif
+
     if (mContext == EGL_NO_CONTEXT) {
         CI_LOGW("ERROR in eglCreateContext, returned EGL_NO_CONTEXT");
     }
