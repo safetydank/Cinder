@@ -405,6 +405,7 @@ LOCAL_SRC_FILES  := $(CINDER_SRC)/app/App.cpp \
 					$(CINDER_SRC)/app/Renderer.cpp \
 					$(CINDER_SRC)/app/AppImplAndroidRendererGl.cpp \
 					$(CINDER_SRC)/gl/gl.cpp \
+					$(CINDER_SRC)/gl/Context.cpp \
 					$(CINDER_SRC)/gl/Fbo.cpp \
 					$(CINDER_SRC)/gl/Texture.cpp \
 					$(CINDER_SRC)/gl/TextureFont.cpp \
