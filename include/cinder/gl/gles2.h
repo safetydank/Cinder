@@ -1,15 +1,20 @@
 #pragma once
 
+#include "cinder/Color.h"
+
+namespace cinder { namespace gl {
+
 class ES2Context;
 typedef std::shared_ptr<ES2Context> ES2ContextRef;
 
 class GlslProg;
 
-//  GLES2 implementation
+//  GLES2 implementation of a GL context
 class ES2Context
 {
 public:
     static void initialize();
+    static void release();
     static void bind();
     static void unbind();
 
@@ -52,6 +57,8 @@ protected:
 
     void updateUniforms();
 };
+
+} }  //  namespace cinder::gl
 
 // /*  GLES2 equivalents to some of Cinder's GL helpers */
 // 

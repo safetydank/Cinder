@@ -66,6 +66,7 @@ inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
 #endif
 
 void initialize();
+void release();
 void bind();
 void unbind();
 

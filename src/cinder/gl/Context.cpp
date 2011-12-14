@@ -1,9 +1,13 @@
 #include <cassert>
 
-#include "cinder/gl/Context.h"
+#include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 
-namespace ci { namespace gl {
+#if defined( CINDER_GLES2 )
+#include "cinder/gl/gles2.h"
+#endif
+
+namespace cinder { namespace gl {
 
 #if ! defined( CINDER_GLES2 )
 
@@ -165,7 +169,7 @@ void GLContext::rotate( const Quatf &quat )
 #if defined( CINDER_GLES2 )
 
 //  Static members
-static ES2ContextRef ES2Context::sContext;
+ES2ContextRef ES2Context::sContext;
 
 ES2Context::ES2Context() : mShader("", "")
 {
@@ -173,29 +177,33 @@ ES2Context::ES2Context() : mShader("", "")
 
 ES2Context::~ES2Context()
 {
-    mShader->reset();
+    mShader.reset();
 }
 
 void ES2Context::initialize()
 {
     //  Android hack - ensure GL resources are released
+    context::release();
+    sContext = ES2ContextRef( new ES2Context() );
+}
+
+void ES2Context::release()
+{
     if (sContext) {
         sContext = ES2ContextRef();
     }
-
-    sContext = ES2ContextRef( new ES2Context() );
 }
 
 void ES2Context::bind()
 {
     assert(sContext);
-    sContext->mShader->bind();
+    sContext->mShader.bind();
 }
 
 void ES2Context::unbind()
 {
     assert(sContext);
-    sContext->mShader->unbind();
+    sContext->mShader.unbind();
 }
 
 void ES2Context::color( float r, float g, float b )
