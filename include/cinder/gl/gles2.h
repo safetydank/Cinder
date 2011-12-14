@@ -1,13 +1,13 @@
 #pragma once
 
 #include "cinder/Color.h"
+#include "cinder/gl/GlslProg.h"
+#include "cinder/gl/Texture.h"
 
 namespace cinder { namespace gl {
 
 class ES2Context;
 typedef std::shared_ptr<ES2Context> ES2ContextRef;
-
-class GlslProg;
 
 //  GLES2 implementation of a GL context
 class ES2Context
@@ -37,9 +37,11 @@ public:
     static void rotate( const Vec3f &xyz );
     static void rotate( const Quatf &quat );
 
+    ~ES2Context();
+
 protected:
     static ES2ContextRef   sContext;
-    GlslProg&              mShader;
+    GlslProg               mShader;
 
     std::vector<Matrix44f> mModelViewStack;
     std::vector<Matrix44f> mProjStack;
@@ -53,7 +55,6 @@ protected:
     bool      mModelViewDirty;
 
     ES2Context();
-    ~ES2Context();
 
     void updateUniforms();
 };

@@ -3,13 +3,9 @@
 #include "cinder/gl/gl.h"
 #include "cinder/gl/GlslProg.h"
 
-#if defined( CINDER_GLES2 )
-#include "cinder/gl/gles2.h"
-#endif
+#if ! defined( CINDER_GLES2 )
 
 namespace cinder { namespace gl {
-
-#if ! defined( CINDER_GLES2 )
 
 void GLContext::setModelView( const Camera &cam )
 {
@@ -164,14 +160,20 @@ void GLContext::rotate( const Quatf &quat )
 		glRotatef( toDegrees( angle ), axis.x, axis.y, axis.z );
 }
 
+} } // namespace cinder::gl
+
 #endif // ! defined( CINDER_GLES2 )
 
 #if defined( CINDER_GLES2 )
 
+#include "cinder/gl/gles2.h"
+
+namespace cinder { namespace gl {
+
 //  Static members
 ES2ContextRef ES2Context::sContext;
 
-ES2Context::ES2Context() : mShader("", "")
+ES2Context::ES2Context()
 {
 }
 
@@ -674,6 +676,7 @@ void ES2Context::updateUniforms()
 //     }
 // }
 
+} } // namespace cinder::gl
+
 #endif // defined( CINDER_GLES2 )
 
-} }
