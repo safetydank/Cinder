@@ -456,29 +456,29 @@ void VboMesh::initializeBuffers( bool staticDataPlanar )
 		mObj->mCustomDynamicLocations = vector<GLint>( mObj->mLayout.mCustomDynamic.size(), -1 );
 }
 
-#if ! defined(CINDER_GLES)
 void VboMesh::enableClientStates() const
 {
 	if( mObj->mLayout.hasPositions() )
-		glEnableClientState( GL_VERTEX_ARRAY );
+		gl::context::enableClientState( GL_VERTEX_ARRAY );
 	else
-		glDisableClientState( GL_VERTEX_ARRAY );
+		gl::context::disableClientState( GL_VERTEX_ARRAY );
 	if( mObj->mLayout.hasNormals() )
-		glEnableClientState( GL_NORMAL_ARRAY );
+		gl::context::enableClientState( GL_NORMAL_ARRAY );
 	else
-		glDisableClientState( GL_NORMAL_ARRAY );
+		gl::context::disableClientState( GL_NORMAL_ARRAY );
 	if( mObj->mLayout.hasColorsRGB() || mObj->mLayout.hasColorsRGBA() )
-		glEnableClientState( GL_COLOR_ARRAY );
+		gl::context::enableClientState( GL_COLOR_ARRAY );
 	else
-		glDisableClientState( GL_COLOR_ARRAY );
+		gl::context::disableClientState( GL_COLOR_ARRAY );
 		
 	for( size_t t = 0; t <= ATTR_MAX_TEXTURE_UNIT; ++t ) {
 		if( mObj->mLayout.hasTexCoords( t ) ) {
-			glClientActiveTexture( GL_TEXTURE0 + t );
-			glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+            gl::context::clientActiveTexture( GL_TEXTURE0 + t );
+            gl::context::enableClientState( GL_TEXTURE_COORD_ARRAY );
 		}
 	}	
 	
+#if ! defined( CINDER_GLES1 )
 	for( size_t a = 0; a < mObj->mCustomStaticLocations.size(); ++a ) {
 		if( mObj->mCustomStaticLocations[a] < 0 )
 			throw;
@@ -490,20 +490,22 @@ void VboMesh::enableClientStates() const
 			throw;
 		glEnableVertexAttribArray( mObj->mCustomDynamicLocations[a] );
 	}
+#endif
 }
 
 void VboMesh::disableClientStates() const
 {
-	glDisableClientState( GL_VERTEX_ARRAY );
-	glDisableClientState( GL_NORMAL_ARRAY );
-	glDisableClientState( GL_COLOR_ARRAY );
+    gl::context::disableClientState( GL_VERTEX_ARRAY );
+    gl::context::disableClientState( GL_NORMAL_ARRAY );
+    gl::context::disableClientState( GL_COLOR_ARRAY );
 	for( size_t t = 0; t <= ATTR_MAX_TEXTURE_UNIT; ++t ) {
 		if( mObj->mLayout.hasTexCoords( t ) ) {
-			glClientActiveTexture( GL_TEXTURE0 + t );
-			glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+            gl::context::clientActiveTexture( GL_TEXTURE0 + t );
+            gl::context::disableClientState( GL_TEXTURE_COORD_ARRAY );
 		}
 	}	
 	
+#if ! defined( CINDER_GLES1 )
 	for( size_t a = 0; a < mObj->mCustomStaticLocations.size(); ++a ) {
 		if( mObj->mCustomStaticLocations[a] < 0 )
 			throw;
@@ -515,7 +517,10 @@ void VboMesh::disableClientStates() const
 			throw;
 		glDisableVertexAttribArray( mObj->mCustomDynamicLocations[a] );
 	}
+#endif
 }
+
+#if ! defined( CINDER_GLES1 )
 
 void VboMesh::bindAllData() const
 {
@@ -530,27 +535,27 @@ void VboMesh::bindAllData() const
 		uint8_t stride = ( buffer == STATIC_BUFFER ) ? mObj->mStaticStride : mObj->mDynamicStride;
 		
 		if( ( ( buffer == STATIC_BUFFER ) ? mObj->mLayout.hasStaticNormals() : mObj->mLayout.hasDynamicNormals() ) )
-			glNormalPointer( GL_FLOAT, stride, ( const GLvoid *)mObj->mNormalOffset );
+			gl::context::normalPointer( GL_FLOAT, stride, ( const GLvoid *)mObj->mNormalOffset );
 
 		if( ( ( buffer == STATIC_BUFFER ) ? mObj->mLayout.hasStaticColorsRGB() : mObj->mLayout.hasDynamicColorsRGB() ) )
-			glColorPointer( 3, GL_FLOAT, stride, ( const GLvoid *)mObj->mColorRGBOffset );
+			gl::context::colorPointer( 3, GL_FLOAT, stride, ( const GLvoid *)mObj->mColorRGBOffset );
 		else if( ( ( buffer == STATIC_BUFFER ) ? mObj->mLayout.hasStaticColorsRGBA() : mObj->mLayout.hasDynamicColorsRGBA() ) )
-			glColorPointer( 4, GL_FLOAT, stride, ( const GLvoid *)mObj->mColorRGBAOffset );
+			gl::context::colorPointer( 4, GL_FLOAT, stride, ( const GLvoid *)mObj->mColorRGBAOffset );
 
 
 		for( size_t t = 0; t <= ATTR_MAX_TEXTURE_UNIT; ++t ) {
 			if( ( buffer == STATIC_BUFFER ) ? mObj->mLayout.hasStaticTexCoords2d( t ) : mObj->mLayout.hasDynamicTexCoords2d( t ) ) {
-				glClientActiveTexture( GL_TEXTURE0 + t );
-				glTexCoordPointer( 2, GL_FLOAT, stride, (const GLvoid *)mObj->mTexCoordOffset[t] );
+                gl::context::clientActiveTexture( GL_TEXTURE0 + t );
+                gl::context::texCoordPointer( 2, GL_FLOAT, stride, (const GLvoid *)mObj->mTexCoordOffset[t] );
 			}
 			else if( ( buffer == STATIC_BUFFER ) ? mObj->mLayout.hasStaticTexCoords3d( t ) : mObj->mLayout.hasDynamicTexCoords3d( t ) ) {
-				glClientActiveTexture( GL_TEXTURE0 + t );
-				glTexCoordPointer( 3, GL_FLOAT, stride, (const GLvoid *)mObj->mTexCoordOffset[t] );
+                gl::context::clientActiveTexture( GL_TEXTURE0 + t );
+				gl::context::texCoordPointer( 3, GL_FLOAT, stride, (const GLvoid *)mObj->mTexCoordOffset[t] );
 			}
 		}	
 
 		if( ( buffer == STATIC_BUFFER ) ? mObj->mLayout.hasStaticPositions() : mObj->mLayout.hasDynamicPositions() )
-			glVertexPointer( 3, GL_FLOAT, stride, (const GLvoid*)mObj->mPositionOffset );
+			gl::context::vertexPointer( 3, GL_FLOAT, stride, (const GLvoid*)mObj->mPositionOffset );
 	}
 
 	for( int buffer = STATIC_BUFFER; buffer <= DYNAMIC_BUFFER; ++buffer ) {

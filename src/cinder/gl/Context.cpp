@@ -1,342 +1,342 @@
-#include <cassert>
-
-#include "cinder/gl/gl.h"
-#include "cinder/gl/GlslProg.h"
-
-#if ! defined( CINDER_GLES2 )
-
-namespace cinder { namespace gl {
-
-void GLContext::setModelView( const Camera &cam )
-{
-	glMatrixMode( GL_MODELVIEW );
-	glLoadMatrixf( cam.getModelViewMatrix().m );
-}
-
-void GLContext::setProjection( const Camera &cam )
-{
-	glMatrixMode( GL_PROJECTION );
-	glLoadMatrixf( cam.getProjectionMatrix().m );
-}
-
-void GLContext::setMatrices( const Camera &cam )
-{
-	setProjection( cam );
-	setModelView( cam );
-}
-
-void GLContext::pushModelView()
-{
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-}
-
-void GLContext::popModelView()
-{
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-}
-
-void GLContext::pushModelView( const Camera &cam )
-{
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();
-	glLoadMatrixf( cam.getModelViewMatrix().m );
-}
-
-void GLContext::pushProjection( const Camera &cam )
-{
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glLoadMatrixf( cam.getProjectionMatrix().m );
-}
-
-void GLContext::pushMatrices()
-{
-	glMatrixMode( GL_PROJECTION );
-	glPushMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPushMatrix();	
-}
-
-void GLContext::popMatrices()
-{
-	glMatrixMode( GL_PROJECTION );
-	glPopMatrix();
-	glMatrixMode( GL_MODELVIEW );
-	glPopMatrix();
-}
-
-void GLContext::multModelView( const Matrix44f &mtx )
-{
-	glMatrixMode( GL_MODELVIEW );
-	glMultMatrixf( mtx );
-}
-
-void GLContext::multProjection( const Matrix44f &mtx )
-{
-	glMatrixMode( GL_PROJECTION );
-	glMultMatrixf( mtx );
-}
-
-Matrix44f GLContext::getModelView()
-{
-	Matrix44f result;
-	glGetFloatv( GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
-	return result;
-}
-
-Matrix44f GLContext::getProjection()
-{
-	Matrix44f result;
-	glGetFloatv( GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
-	return result;
-}
-
-void GLContext::setMatricesWindowPersp( int screenWidth, int screenHeight, float fovDegrees, float nearPlane, float farPlane, bool originUpperLeft )
-{
-	CameraPersp cam( screenWidth, screenHeight, fovDegrees, nearPlane, farPlane );
-
-	glMatrixMode( GL_PROJECTION );
-	glLoadMatrixf( cam.getProjectionMatrix().m );
-
-	glMatrixMode( GL_MODELVIEW );
-	glLoadMatrixf( cam.getModelViewMatrix().m );
-	if( originUpperLeft ) {
-		glScalef( 1.0f, -1.0f, 1.0f );           // invert Y axis so increasing Y goes down.
-		glTranslatef( 0.0f, (float)-screenHeight, 0.0f );       // shift origin up to upper-left corner.
-		glViewport( 0, 0, screenWidth, screenHeight );
-	}
-}
-
-void GLContext::setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft )
-{
-	glMatrixMode( GL_PROJECTION );
-	glLoadIdentity();
-#if defined( CINDER_GLES1 )
-	if( originUpperLeft )
-		glOrthof( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
-	else
-		glOrthof( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
-#else	
-	if( originUpperLeft )
-		glOrtho( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
-	else
-		glOrtho( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
-#endif
-	glMatrixMode( GL_MODELVIEW );
-	glLoadIdentity();
-	glViewport( 0, 0, screenWidth, screenHeight );
-}
-
-void GLContext::translate( const Vec2f &pos )
-{
-	glTranslatef( pos.x, pos.y, 0 );
-}
-
-void GLContext::translate( const Vec3f &pos )
-{
-	glTranslatef( pos.x, pos.y, pos.z );
-}
-
-void GLContext::scale( const Vec3f &scale )
-{
-	glScalef( scale.x, scale.y, scale.z );
-}
-
-void GLContext::rotate( const Vec3f &xyz )
-{
-	glRotatef( xyz.x, 1.0f, 0.0f, 0.0f );
-	glRotatef( xyz.y, 0.0f, 1.0f, 0.0f );
-	glRotatef( xyz.z, 0.0f, 0.0f, 1.0f );
-}
-
-void GLContext::rotate( const Quatf &quat )
-{
-	Vec3f axis;
-	float angle;
-	quat.getAxisAngle( &axis, &angle );
-	if( math<float>::abs( angle ) > EPSILON_VALUE )
-		glRotatef( toDegrees( angle ), axis.x, axis.y, axis.z );
-}
-
-} } // namespace cinder::gl
-
-#endif // ! defined( CINDER_GLES2 )
-
-#if defined( CINDER_GLES2 )
-
-#include "cinder/gl/gles2.h"
-
-namespace cinder { namespace gl {
-
-//  Static members
-ES2ContextRef ES2Context::sContext;
-
-ES2Context::ES2Context()
-{
-}
-
-ES2Context::~ES2Context()
-{
-    mShader.reset();
-}
-
-void ES2Context::initialize()
-{
-    //  Android hack - ensure GL resources are released
-    context::release();
-    sContext = ES2ContextRef( new ES2Context() );
-}
-
-void ES2Context::release()
-{
-    if (sContext) {
-        sContext = ES2ContextRef();
-    }
-}
-
-void ES2Context::bind()
-{
-    assert(sContext);
-    sContext->mShader.bind();
-}
-
-void ES2Context::unbind()
-{
-    assert(sContext);
-    sContext->mShader.unbind();
-}
-
-void ES2Context::color( float r, float g, float b )
-{
-    assert(sContext);
-    sContext->mColor = Color(r, g, b);
-}
-
-void ES2Context::color( float r, float g, float b, float a )
-{
-    assert(sContext);
-    sContext->mColor = ColorA(r, g, b, a);
-}
-
-void ES2Context::color( const Color8u &c )
-{
-    assert(sContext);
-    sContext->mColor = c;
-}
-
-void ES2Context::color( const ColorA8u &c )
-{
-    assert(sContext);
-    sContext->mColor = c;
-}
-
-void ES2Context::color( const Color &c )
-{
-    assert(sContext);
-    sContext->mColor = c;
-}
-
-void ES2Context::color( const ColorA &c )
-{
-    assert(sContext);
-    sContext->mColor = c;
-}
-
-void ES2Context::enableClientState(GLenum cap)
-{
-    int attr = 0;
-    //  XXX enable client state using mShader
-    switch(cap) {
-    case GL_VERTEX_ARRAY:
-        attr = 0;
-        break;
-    case GL_COLOR_ARRAY:
-        attr = 0;
-        break;
-    case GL_TEXTURE_COORD_ARRAY:
-        attr = 0;
-        break;
-    default:
-        break;
-    }
-
-    glEnableVertexAttribArray(attr);
-}
-
-void ES2Context::vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
-{
-    int attr = 0;
-    glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
-}
-
-void ES2Context::texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
-{
-    int attr = 0;
-    glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
-}
-
-void ES2Context::colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
-{
-    int attr = 0;
-    glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
-}
-
-void ES2Context::normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
-{
-    int attr = 0;
-    glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
-}
-
-
-void ES2Context::translate( const Vec2f &pos )
-{
-    assert(sContext);
-    sContext->translate(Vec3f(pos.x, pos.y, 0));
-}
-
-void ES2Context::translate( const Vec3f &pos )
-{
-    assert(sContext);
-    sContext->mModelView.translate(pos);
-    sContext->mModelViewDirty = true;
-    sContext->updateUniforms();
-}
-
-void ES2Context::scale( const Vec3f &scl )
-{
-    assert(sContext);
-    sContext->mModelView.scale(scl);
-    sContext->mModelViewDirty = true;
-    sContext->updateUniforms();
-}
-
-void ES2Context::rotate( const Vec3f &xyz )
-{
-    assert(sContext);
-    Vec3f xyzrad(toRadians(xyz.x), toRadians(xyz.y), toRadians(xyz.z));
-    sContext->mModelView.rotate(xyzrad);
-    sContext->mModelViewDirty = true;
-    sContext->updateUniforms();
-}
-
-void ES2Context::rotate( const Quatf &quat )
-{
-	Vec3f axis;
-	float angle;
-	quat.getAxisAngle( &axis, &angle );
-    if( math<float>::abs( angle ) > EPSILON_VALUE ) {
-		sContext->mModelView.rotate( Vec3f(axis.x, axis.y, axis.z), angle );
-        sContext->mModelViewDirty = true;
-        sContext->updateUniforms();
-    }
-}
-
-void ES2Context::updateUniforms()
-{
-    // XXX TODO
-}
+// #include <cassert>
+// 
+// #include "cinder/gl/gl.h"
+// #include "cinder/gl/GlslProg.h"
+// 
+// #if ! defined( CINDER_GLES2 )
+// 
+// namespace cinder { namespace gl {
+// 
+// void GLContext::setModelView( const Camera &cam )
+// {
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glLoadMatrixf( cam.getModelViewMatrix().m );
+// }
+// 
+// void GLContext::setProjection( const Camera &cam )
+// {
+// 	glMatrixMode( GL_PROJECTION );
+// 	glLoadMatrixf( cam.getProjectionMatrix().m );
+// }
+// 
+// void GLContext::setMatrices( const Camera &cam )
+// {
+// 	setProjection( cam );
+// 	setModelView( cam );
+// }
+// 
+// void GLContext::pushModelView()
+// {
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glPushMatrix();
+// }
+// 
+// void GLContext::popModelView()
+// {
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glPopMatrix();
+// }
+// 
+// void GLContext::pushModelView( const Camera &cam )
+// {
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glPushMatrix();
+// 	glLoadMatrixf( cam.getModelViewMatrix().m );
+// }
+// 
+// void GLContext::pushProjection( const Camera &cam )
+// {
+// 	glMatrixMode( GL_PROJECTION );
+// 	glPushMatrix();
+// 	glLoadMatrixf( cam.getProjectionMatrix().m );
+// }
+// 
+// void GLContext::pushMatrices()
+// {
+// 	glMatrixMode( GL_PROJECTION );
+// 	glPushMatrix();
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glPushMatrix();	
+// }
+// 
+// void GLContext::popMatrices()
+// {
+// 	glMatrixMode( GL_PROJECTION );
+// 	glPopMatrix();
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glPopMatrix();
+// }
+// 
+// void GLContext::multModelView( const Matrix44f &mtx )
+// {
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glMultMatrixf( mtx );
+// }
+// 
+// void GLContext::multProjection( const Matrix44f &mtx )
+// {
+// 	glMatrixMode( GL_PROJECTION );
+// 	glMultMatrixf( mtx );
+// }
+// 
+// Matrix44f GLContext::getModelView()
+// {
+// 	Matrix44f result;
+// 	glGetFloatv( GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
+// 	return result;
+// }
+// 
+// Matrix44f GLContext::getProjection()
+// {
+// 	Matrix44f result;
+// 	glGetFloatv( GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>( &(result.m) ) );
+// 	return result;
+// }
+// 
+// void GLContext::setMatricesWindowPersp( int screenWidth, int screenHeight, float fovDegrees, float nearPlane, float farPlane, bool originUpperLeft )
+// {
+// 	CameraPersp cam( screenWidth, screenHeight, fovDegrees, nearPlane, farPlane );
+// 
+// 	glMatrixMode( GL_PROJECTION );
+// 	glLoadMatrixf( cam.getProjectionMatrix().m );
+// 
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glLoadMatrixf( cam.getModelViewMatrix().m );
+// 	if( originUpperLeft ) {
+// 		glScalef( 1.0f, -1.0f, 1.0f );           // invert Y axis so increasing Y goes down.
+// 		glTranslatef( 0.0f, (float)-screenHeight, 0.0f );       // shift origin up to upper-left corner.
+// 		glViewport( 0, 0, screenWidth, screenHeight );
+// 	}
+// }
+// 
+// void GLContext::setMatricesWindow( int screenWidth, int screenHeight, bool originUpperLeft )
+// {
+// 	glMatrixMode( GL_PROJECTION );
+// 	glLoadIdentity();
+// #if defined( CINDER_GLES1 )
+// 	if( originUpperLeft )
+// 		glOrthof( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
+// 	else
+// 		glOrthof( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
+// #else	
+// 	if( originUpperLeft )
+// 		glOrtho( 0, screenWidth, screenHeight, 0, -1.0f, 1.0f );
+// 	else
+// 		glOrtho( 0, screenWidth, 0, screenHeight, -1.0f, 1.0f );
+// #endif
+// 	glMatrixMode( GL_MODELVIEW );
+// 	glLoadIdentity();
+// 	glViewport( 0, 0, screenWidth, screenHeight );
+// }
+// 
+// void GLContext::translate( const Vec2f &pos )
+// {
+// 	glTranslatef( pos.x, pos.y, 0 );
+// }
+// 
+// void GLContext::translate( const Vec3f &pos )
+// {
+// 	glTranslatef( pos.x, pos.y, pos.z );
+// }
+// 
+// void GLContext::scale( const Vec3f &scale )
+// {
+// 	glScalef( scale.x, scale.y, scale.z );
+// }
+// 
+// void GLContext::rotate( const Vec3f &xyz )
+// {
+// 	glRotatef( xyz.x, 1.0f, 0.0f, 0.0f );
+// 	glRotatef( xyz.y, 0.0f, 1.0f, 0.0f );
+// 	glRotatef( xyz.z, 0.0f, 0.0f, 1.0f );
+// }
+// 
+// void GLContext::rotate( const Quatf &quat )
+// {
+// 	Vec3f axis;
+// 	float angle;
+// 	quat.getAxisAngle( &axis, &angle );
+// 	if( math<float>::abs( angle ) > EPSILON_VALUE )
+// 		glRotatef( toDegrees( angle ), axis.x, axis.y, axis.z );
+// }
+// 
+// } } // namespace cinder::gl
+// 
+// #endif // ! defined( CINDER_GLES2 )
+// 
+// #if defined( CINDER_GLES2 )
+// 
+// #include "cinder/gl/gles2.h"
+// 
+// namespace cinder { namespace gl {
+// 
+// //  Static members
+// ES2ContextRef ES2Context::sContext;
+// 
+// ES2Context::ES2Context()
+// {
+// }
+// 
+// ES2Context::~ES2Context()
+// {
+//     mShader.reset();
+// }
+// 
+// void ES2Context::initialize()
+// {
+//     //  Android hack - ensure GL resources are released
+//     context::release();
+//     sContext = ES2ContextRef( new ES2Context() );
+// }
+// 
+// void ES2Context::release()
+// {
+//     if (sContext) {
+//         sContext = ES2ContextRef();
+//     }
+// }
+// 
+// void ES2Context::bind()
+// {
+//     assert(sContext);
+//     sContext->mShader.bind();
+// }
+// 
+// void ES2Context::unbind()
+// {
+//     assert(sContext);
+//     sContext->mShader.unbind();
+// }
+// 
+// void ES2Context::color( float r, float g, float b )
+// {
+//     assert(sContext);
+//     sContext->mColor = Color(r, g, b);
+// }
+// 
+// void ES2Context::color( float r, float g, float b, float a )
+// {
+//     assert(sContext);
+//     sContext->mColor = ColorA(r, g, b, a);
+// }
+// 
+// void ES2Context::color( const Color8u &c )
+// {
+//     assert(sContext);
+//     sContext->mColor = c;
+// }
+// 
+// void ES2Context::color( const ColorA8u &c )
+// {
+//     assert(sContext);
+//     sContext->mColor = c;
+// }
+// 
+// void ES2Context::color( const Color &c )
+// {
+//     assert(sContext);
+//     sContext->mColor = c;
+// }
+// 
+// void ES2Context::color( const ColorA &c )
+// {
+//     assert(sContext);
+//     sContext->mColor = c;
+// }
+// 
+// void ES2Context::enableClientState(GLenum cap)
+// {
+//     int attr = 0;
+//     //  XXX enable client state using mShader
+//     switch(cap) {
+//     case GL_VERTEX_ARRAY:
+//         attr = 0;
+//         break;
+//     case GL_COLOR_ARRAY:
+//         attr = 0;
+//         break;
+//     case GL_TEXTURE_COORD_ARRAY:
+//         attr = 0;
+//         break;
+//     default:
+//         break;
+//     }
+// 
+//     glEnableVertexAttribArray(attr);
+// }
+// 
+// void ES2Context::vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+// {
+//     int attr = 0;
+//     glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+// }
+// 
+// void ES2Context::texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+// {
+//     int attr = 0;
+//     glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+// }
+// 
+// void ES2Context::colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+// {
+//     int attr = 0;
+//     glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+// }
+// 
+// void ES2Context::normalPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
+// {
+//     int attr = 0;
+//     glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+// }
+// 
+// 
+// void ES2Context::translate( const Vec2f &pos )
+// {
+//     assert(sContext);
+//     sContext->translate(Vec3f(pos.x, pos.y, 0));
+// }
+// 
+// void ES2Context::translate( const Vec3f &pos )
+// {
+//     assert(sContext);
+//     sContext->mModelView.translate(pos);
+//     sContext->mModelViewDirty = true;
+//     sContext->updateUniforms();
+// }
+// 
+// void ES2Context::scale( const Vec3f &scl )
+// {
+//     assert(sContext);
+//     sContext->mModelView.scale(scl);
+//     sContext->mModelViewDirty = true;
+//     sContext->updateUniforms();
+// }
+// 
+// void ES2Context::rotate( const Vec3f &xyz )
+// {
+//     assert(sContext);
+//     Vec3f xyzrad(toRadians(xyz.x), toRadians(xyz.y), toRadians(xyz.z));
+//     sContext->mModelView.rotate(xyzrad);
+//     sContext->mModelViewDirty = true;
+//     sContext->updateUniforms();
+// }
+// 
+// void ES2Context::rotate( const Quatf &quat )
+// {
+// 	Vec3f axis;
+// 	float angle;
+// 	quat.getAxisAngle( &axis, &angle );
+//     if( math<float>::abs( angle ) > EPSILON_VALUE ) {
+// 		sContext->mModelView.rotate( Vec3f(axis.x, axis.y, axis.z), angle );
+//         sContext->mModelViewDirty = true;
+//         sContext->updateUniforms();
+//     }
+// }
+// 
+// void ES2Context::updateUniforms()
+// {
+//     // XXX TODO
+// }
 
 // GlesContext::GlesContext()
 // {

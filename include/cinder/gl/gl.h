@@ -335,7 +335,11 @@ struct ClientBoolState {
 	~ClientBoolState();
   private:
 	GLint		mTarget;
+#if defined( CINDER_GLES2 )
+	GLint		mOldValue;
+#else
 	GLboolean	mOldValue;
+#endif
 };
 
 //! Convenience class designed to push and pop the current color

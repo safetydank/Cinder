@@ -7,7 +7,7 @@ namespace cinder { namespace gl { namespace context {
 //  OpenGL / GLES1 implementation
 #if ! defined( CINDER_GLES2 )
 
-inline void initialize() {}
+inline void initialize() { CI_LOGW("XXX context::initialize() GLES1"); }
 inline void bind()       {}
 inline void unbind()     {}
 
@@ -37,6 +37,11 @@ inline void drawArrays(GLenum mode, GLint first, GLsizei count)
     glDrawArrays(mode, first, count);
 }
 
+inline void clientActiveTexture(GLenum texture)
+{
+    glClientActiveTexture(texture);
+}
+
 #if ! defined( CINDER_GLES1 )
 inline void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices)
 {
@@ -54,8 +59,9 @@ inline void color( const ColorA &c ) { glColor4f( c.r, c.g, c.b, c.a ); }
 
 #endif
 
-//  OpenGL ES2 implementation
 #if defined( CINDER_GLES2 )
+
+//  OpenGL ES2 implementation defined in gles2.cpp
 
 //  Compatibility constants
 #if ! defined( GL_VERTEX_ARRAY )
@@ -82,6 +88,8 @@ void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices
 void drawArrays(GLenum mode, GLint first, GLsizei count);
 //! GLES2 implementation of drawRangeElements ignores the start and end arguments
 void drawRangeElements(GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
+
+void clientActiveTexture(GLenum texture);
 
 void color( float r, float g, float b );
 void color( float r, float g, float b, float a );

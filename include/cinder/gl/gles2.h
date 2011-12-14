@@ -4,7 +4,7 @@
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Texture.h"
 
-namespace cinder { namespace gl {
+namespace cinder { namespace gl { namespace context {
 
 class ES2Context;
 typedef std::shared_ptr<ES2Context> ES2ContextRef;
@@ -59,7 +59,7 @@ protected:
     void updateUniforms();
 };
 
-} }  //  namespace cinder::gl
+} } }  //  namespace cinder::gl::context
 
 // /*  GLES2 equivalents to some of Cinder's GL helpers */
 // 
