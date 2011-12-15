@@ -6,10 +6,6 @@
 #include "cinder/gl/TextureFont.h"
 #include "cinder/Utilities.h"
 
-#if defined( CINDER_GLES2 )
-    #include "cinder/gl/gles2.h"
-#endif
-
 using namespace ci;
 using namespace ci::app;
 using namespace std;
