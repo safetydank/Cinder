@@ -112,6 +112,14 @@ struct ES2Attribute
     }
 };
 
+struct ES2UniformBase
+{
+};
+
+struct ES2Uniform
+{
+};
+
 class ES2Context
 {
 protected:
@@ -123,10 +131,13 @@ protected:
 
     Matrix44f mProj;
     Matrix44f mModelView;
+
     ColorA    mColor;
     int       mActiveTexture;
     int       mClientActiveTexture;
     Texture   mTexture;
+
+    bool mLightingEnabled;
 
     bool mProjDirty;
     bool mModelViewDirty;
@@ -161,6 +172,11 @@ protected:
         }
 
         return capId;
+    }
+
+    void preDraw()
+    {
+        Matrix44f modelView = mModelViewStack.back();
     }
 
     //  Update shader uniforms
@@ -213,6 +229,16 @@ public:
         int capId = attributeId(cap);
         if (capId >= 0)
             mAttributes[capId].enabled = false;
+    }
+
+    void enableLighting()
+    {
+        mLightingEnabled = true;
+    }
+
+    void disableLighting()
+    {
+        mLightingEnabled = false;
     }
 
     void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
@@ -471,6 +497,16 @@ void enableClientState(GLenum cap)
 void disableClientState(GLenum cap)
 {
     GLES_CONTEXT_METHOD(disableClientState, cap)
+}
+
+void enableLighting()
+{
+    GLES_CONTEXT_METHOD(enableLighting)
+}
+
+void disableLighting()
+{
+    GLES_CONTEXT_METHOD(disableLighting)
 }
 
 void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)

@@ -14,6 +14,9 @@ inline void unbind()     {}
 inline void enableClientState(GLenum cap) { glEnableClientState(cap); }
 inline void disableClientState(GLenum cap) { glDisableClientState(cap); }
 
+inline void enableLighting()  { glEnable(GL_LIGHTING); }
+inline void disableLighting() { glDisable(GL_LIGHTING); }
+
 inline void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer) {
     glVertexPointer(size, type, stride, pointer);
 }
@@ -78,6 +81,9 @@ void unbind();
 
 void enableClientState(GLenum cap);
 void disableClientState(GLenum cap);
+
+void enableLighting();
+void disableLighting();
 
 void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
 void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer);
