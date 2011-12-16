@@ -14,52 +14,52 @@ namespace context {
 class ES2Context;
 typedef std::shared_ptr<ES2Context> ES2ContextRef;
 
-// const char* CinderProgES2::verts = 
-//         "attribute vec3 aPosition;\n"
-//         "attribute vec4 aColor;\n"
-//         "attribute vec2 aTexCoord;\n"
-// 
-//         "uniform mat4 uProjection;\n"
-//         "uniform mat4 uModelView;\n"
-//         "uniform vec4 uVertexColor;\n"
-// 
-//         "uniform bool uHasVertexAttr;\n"
-//         "uniform bool uHasTexCoordAttr;\n"
-//         "uniform bool uHasColorAttr;\n"
-//         "uniform bool uHasNormalAttr;\n"
-// 
-//         "varying vec4 vColor;\n"
-//         "varying vec2 vTexCoord;\n"
-// 
-//         "void main() {\n"
-//         "  vColor = uVertexColor;\n"
-//         "  if (uHasColorAttr) {\n"
-//         "    vColor *= aColor;\n"
-//         "  }\n"
-//         "  if (uHasTexCoordAttr) {\n"
-//         "    vTexCoord = aTexCoord;\n"
-//         "  }\n"
-//         "  gl_Position = uProjection * uModelView * vec4(aPosition, 1.0);\n"
-//         "}\n";
-// 
-// const char* CinderProgES2::frags = 
-//         "precision mediump float;\n"
-// 
-//         "uniform bool uHasTexCoordAttr;\n"
-//         "uniform sampler2D sTexture;\n"
-// 
-//         "varying vec4 vColor;\n"
-//         "varying vec2 vTexCoord;\n"
-// 
-//         "void main() {\n"
-//         "    if (uHasTexCoordAttr) {\n"
-//         "      gl_FragColor = vColor * texture2D(sTexture, vTexCoord);\n"
-//         "    }\n"
-//         "    else {\n"
-//         "      gl_FragColor = vColor;\n"
-//         "    }\n"
-//         "}\n";
-// 
+const char* defaultVertex = 
+        "attribute vec3 aPosition;\n"
+        "attribute vec4 aColor;\n"
+        "attribute vec2 aTexCoord;\n"
+
+        "uniform mat4 uProjection;\n"
+        "uniform mat4 uModelView;\n"
+        "uniform vec4 uVertexColor;\n"
+
+        "uniform bool uHasVertexAttr;\n"
+        "uniform bool uHasTexCoordAttr;\n"
+        "uniform bool uHasColorAttr;\n"
+        "uniform bool uHasNormalAttr;\n"
+
+        "varying vec4 vColor;\n"
+        "varying vec2 vTexCoord;\n"
+
+        "void main() {\n"
+        "  vColor = uVertexColor;\n"
+        "  if (uHasColorAttr) {\n"
+        "    vColor *= aColor;\n"
+        "  }\n"
+        "  if (uHasTexCoordAttr) {\n"
+        "    vTexCoord = aTexCoord;\n"
+        "  }\n"
+        "  gl_Position = uProjection * uModelView * vec4(aPosition, 1.0);\n"
+        "}\n";
+
+const char* defaultFrag = 
+        "precision mediump float;\n"
+
+        "uniform bool uHasTexCoordAttr;\n"
+        "uniform sampler2D sTexture;\n"
+
+        "varying vec4 vColor;\n"
+        "varying vec2 vTexCoord;\n"
+
+        "void main() {\n"
+        "    if (uHasTexCoordAttr) {\n"
+        "      gl_FragColor = vColor * texture2D(sTexture, vTexCoord);\n"
+        "    }\n"
+        "    else {\n"
+        "      gl_FragColor = vColor;\n"
+        "    }\n"
+        "}\n";
+
 
 enum {
     ATTR_POSITION = 0,
@@ -82,21 +82,33 @@ struct ES2Attribute
     int   id;
     GLint location;
     bool  enabled;
+    bool  uploaded;
 
-    ES2Attribute() : size(0), type(0), stride(0), pointer(0), id(0), location(0), enabled(false)
+    ES2Attribute() 
+        : size(0), type(0), stride(0), pointer(0), id(0), location(0), enabled(false), uploaded(false)
     {
     }
 
-    void set(GLint size, GLenum type, GLsizei stride, void* pointer)
+    void set(GLint asize, GLenum atype, GLsizei astride, void* apointer)
     {
-        this->size    = size;
-        this->type    = type;
-        this->stride  = stride;
-        this->pointer = pointer;
+        size     = asize;
+        type     = atype;
+        stride   = astride;
+        pointer  = apointer;
+        uploaded = false;
     }
 
     void upload()
     {
+        if (enabled) {
+            glEnableVertexAttribArray(location);
+            if (!uploaded) {
+                glVertexAttribPointer(location, size, type, normalized, stride, pointer);
+                uploaded = true;
+            }
+        } else {
+            glDisableVertexAttribArray(location);
+        }
     }
 };
 
@@ -121,6 +133,10 @@ protected:
 
     ES2Context() : mActiveTexture(0)
     {
+        mShader = GlslProg(defaultVertex, defaultFrag);
+        for (int i=0; i < ATTR_COUNT; ++i) {
+            mAttributes.push_back(ES2Attribute());
+        }
     }
 
     int attributeId(GLenum cap)
@@ -130,14 +146,14 @@ protected:
             case GL_VERTEX_ARRAY:
                 capId = ATTR_POSITION;
                 break;
+            case GL_NORMAL_ARRAY:
+                capId = ATTR_NORMAL;
+                break;
             case GL_COLOR_ARRAY:
                 capId = ATTR_COLOR;
                 break;
             case GL_TEXTURE_COORD_ARRAY:
                 capId = ATTR_TEXCOORD0 + mActiveTexture;
-                break;
-            case GL_NORMAL_ARRAY:
-                capId = ATTR_NORMAL;
                 break;
             default:
                 capId = -1;
@@ -164,7 +180,7 @@ public:
     void initialize()
     {
         CI_LOGW("XXX context::initialize() GLES2");
-        sContext = ES2ContextRef();
+        sContext.reset();
         sContext = ES2ContextRef(new ES2Context());
     }
 
@@ -201,27 +217,23 @@ public:
 
     void vertexPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
     {
-        int attr = 0;
-        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+        mAttributes[ATTR_POSITION]->set(size, type, stride, pointer);
     }
 
     void texCoordPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
     {
-        int attr = 0;
-        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+        mAttributes[ATTR_TEXCOORD0 + mClientActiveTexture]->set(size, type, stride, pointer);
     }
 
     void colorPointer(GLint size, GLenum type, GLsizei stride, const GLvoid* pointer)
     {
-        int attr = 0;
-        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+        mAttributes[ATTR_COLOR]->set(size, type, stride, pointer);
     }
 
     void normalPointer(GLenum type, GLsizei stride, const GLvoid* pointer)
     {
-        int attr = 0;
         int size = 3;
-        glVertexAttribPointer( attr, size, type, GL_FALSE, stride, pointer );
+        mAttributes[ATTR_NORMAL]->set(size, type, stride, pointer);
     }
 
     void drawElements(GLenum mode, GLsizei count, GLenum type, const GLvoid* indices)

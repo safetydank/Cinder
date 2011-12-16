@@ -676,7 +676,7 @@
 //     }
 // }
 
-} } // namespace cinder::gl
-
-#endif // defined( CINDER_GLES2 )
+// } } // namespace cinder::gl
+// 
+// #endif // defined( CINDER_GLES2 )
 
