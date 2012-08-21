@@ -6,6 +6,9 @@
 # Enable FreeImage backend for Image decoding (large)
 # USE_FREEIMAGE = yes
 
+# Enable OCV Android Native Camera module
+USE_OCV_CAPTURE = yes
+
 # Also build ARM v7 ABI binaries (required for NEON support)
 # USE_ARMEABI_V7A = yes
 

@@ -24,6 +24,13 @@ LOCAL_MODULE := pixman
 LOCAL_SRC_FILES := ../../../lib/android/$(TARGET_ARCH_ABI)/libpixman.a
 include $(PREBUILT_STATIC_LIBRARY)
 
+ifdef USE_OCV_CAPTURE
+	include $(CLEAR_VARS)
+	LOCAL_MODULE := ocvcapture_activity
+	LOCAL_SRC_FILES := ../../obj/local/$(TARGET_ARCH_ABI)/libocvcapture_activity.a
+	include $(PREBUILT_STATIC_LIBRARY)
+endif
+
 include $(CLEAR_VARS)
 
 include $(LOCAL_PATH)/../../jni/cinder/Configure.mk

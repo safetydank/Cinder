@@ -31,6 +31,11 @@
 #elif defined( CINDER_MSW )
 	#include "cinder/CaptureImplDirectShow.h"
 	typedef cinder::CaptureImplDirectShow	CapturePlatformImpl;
+#elif defined( CINDER_ANDROID )
+	#if defined( CINDER_OCVCAPTURE )
+		#include "cinder/CaptureImplAndroid.h"
+		typedef cinder::CaptureImplAndroid	CapturePlatformImpl;
+	#endif
 #endif
 
 #include <set>

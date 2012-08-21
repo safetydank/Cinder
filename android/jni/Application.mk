@@ -1,7 +1,7 @@
 CINDER_JNI_PATH = $(call my-dir)
 include $(CINDER_JNI_PATH)/cinder/Configure.mk
 
-APP_ABI := armeabi
+APP_ABI := armeabi-v7a
 APP_PLATFORM := android-9
 APP_STL      := gnustl_static
 APP_MODULES  := cinder
@@ -17,5 +17,9 @@ endif
 
 ifdef USE_FREETYPE
 APP_MODULES += ft2
+endif
+
+ifdef USE_OCV_CAPTURE
+APP_MODULES += ocvcapture_activity
 endif
 

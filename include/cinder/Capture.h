@@ -51,6 +51,10 @@ namespace cinder {
 
 #if defined( CINDER_MSW )
 	class CaptureImplDirectShow;
+#elif defined( CINDER_ANDROID )
+	#if defined( CINDER_OCVCAPTURE )
+		class CaptureImplAndroid;
+	#endif
 #endif
 
 class Capture {
@@ -129,6 +133,10 @@ class Capture {
 		CaptureImplAvFoundation			*mImpl;
 #elif defined( CINDER_MSW )
 		CaptureImplDirectShow			*mImpl;
+#elif defined( CINDER_ANDROID )
+		#if defined( CINDER_OCVCAPTURE )
+			CaptureImplAndroid 				*mImpl;
+		#endif
 #endif
 	};
 	

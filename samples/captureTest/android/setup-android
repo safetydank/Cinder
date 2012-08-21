@@ -1,0 +1,21 @@
+# source this file
+ANDROID_TOOL=android
+
+# Use android.bat on cygwin
+hash ${ANDROID_TOOL} 2>&-
+if [ $? -ne 0 ]; then
+    ANDROID_TOOL=android.bat
+fi
+
+${ANDROID_TOOL} update project --path . --name CaptureTest --target android-10
+
+if [ -z $NDK_MODULE_PATH ]; then
+export NDK_MODULE_PATH=`readlink -f $PWD/../../../android/prebuilt`
+echo "NDK_MODULE_PATH set to $NDK_MODULE_PATH"
+fi
+
+echo
+echo "Ready to run ndk-build && ant"
+
+
+
