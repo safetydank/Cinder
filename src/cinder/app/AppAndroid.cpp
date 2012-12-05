@@ -179,7 +179,7 @@ static void engine_update_touches_ended( ci::app::AppAndroid& app, TouchState* t
 
 
 /**
- * Process the next android input event.
+ * Process the next input event.
  */
 static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) {
     static const char* actionNames[] = {
@@ -191,65 +191,83 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
         "AMOTION_EVENT_ACTION_POINTER_DOWN",
         "AMOTION_EVENT_ACTION_POINTER_UP",
     };
-
+    
     struct engine* engine = (struct engine*)app->userData;
+    struct ci::app::AppAndroid& cinderApp = *(engine->cinderApp);
     struct TouchState* touchState = engine->touchState;
-
+    
     int32_t eventType = AInputEvent_getType(event);
-
+    
     if (eventType == AINPUT_EVENT_TYPE_MOTION) {
         int32_t actionCode = AMotionEvent_getAction(event);
         int action = actionCode & AMOTION_EVENT_ACTION_MASK;
         int index  = (actionCode & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
         const char* actionName = (action >= 0 && action <= 6) ? actionNames[action] : "UNKNOWN";
-        // CI_LOGI("Received touch action %s pointer index %d", actionName, index);
-
+        CI_LOGI("Received touch action %s pointer index %i", actionName, index);
+        
         double timestamp = engine->cinderApp->getElapsedSeconds();
         if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_POINTER_DOWN) {
+            int pointerCount = AMotionEvent_getPointerCount(event);
             int pointerId = AMotionEvent_getPointerId(event, index);
             float x = AMotionEvent_getX(event, index);
             float y = AMotionEvent_getY(event, index);
             TouchEvent::Touch touch(ci::Vec2f(x, y), ci::Vec2f(x, y), pointerId, timestamp, NULL);
-            touchState->touchesBegan.push_back(touch);
+            
+            touchState->activeTouches.erase(pointerId);
             touchState->activeTouches.insert(std::make_pair(pointerId, touch));
-
-            // CI_LOGI("Pointer id %d down x %f y %f", pointerId, x, y);
+            touchState->touchesBegan.push_back(touch);
+            CI_LOGI("Pointer id %d down x %f y %f", pointerId, x, y);
+            
+            engine_update_active_touches( cinderApp, engine->touchState );
+            engine_update_touches_began( cinderApp, engine->touchState );
+            
         }
         else if (action == AMOTION_EVENT_ACTION_MOVE) {
             int pointerCount = AMotionEvent_getPointerCount(event);
-
             for (int i=0; i < pointerCount; ++i) {
                 int pointerId = AMotionEvent_getPointerId(event, i);
                 float x = AMotionEvent_getX(event, i);
                 float y = AMotionEvent_getY(event, i);
                 map<int, TouchEvent::Touch>::iterator it = touchState->activeTouches.find(pointerId);
+                
                 if (it != touchState->activeTouches.end()) {
                     TouchEvent::Touch& prevTouch = it->second;
                     TouchEvent::Touch touch(ci::Vec2f(x, y), prevTouch.getPos(), pointerId, timestamp, NULL);
-                    touchState->touchesMoved.push_back(touch);
+                    
                     touchState->activeTouches.erase(pointerId);
                     touchState->activeTouches.insert(std::make_pair(pointerId, touch));
-                    // CI_LOGI("Pointer id %d move x %f y %f", pointerId, x, y);
+                    touchState->touchesMoved.push_back(touch);
+                    CI_LOGI("Pointer id %d move x %f y %f", pointerId, x, y);
                 }
             }
+            
+            engine_update_active_touches( cinderApp, engine->touchState );
+            engine_update_touches_moved( cinderApp, engine->touchState );
+            
         }
-        else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_POINTER_UP) {
+        else if ( action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_CANCEL ) {
+            int pointerCount = AMotionEvent_getPointerCount(event);
             int pointerId = AMotionEvent_getPointerId(event, index);
             float x = AMotionEvent_getX(event, index);
             float y = AMotionEvent_getY(event, index);
-            touchState->touchesEnded.push_back(TouchEvent::Touch(ci::Vec2f(x, y), ci::Vec2f(x, y), pointerId, timestamp, NULL));
+            
             touchState->activeTouches.erase(pointerId);
-            // CI_LOGI("Pointer id %d up x %f y %f", pointerId, x, y);
+            touchState->touchesEnded.push_back(TouchEvent::Touch(ci::Vec2f(x, y), ci::Vec2f(x, y), pointerId, timestamp, NULL));
+            CI_LOGI("Pointer id %d up x %f y %f", pointerId, x, y);
+            
+            engine_update_active_touches( cinderApp, engine->touchState );
+            engine_update_touches_ended( cinderApp, engine->touchState );
+            
         }
-
+        
         return 1;
     }
     else if (eventType == AINPUT_EVENT_TYPE_KEY) {
         int32_t actionCode = AKeyEvent_getAction(event);
         int32_t keyCode = AKeyEvent_getKeyCode(event);
     }
-
-    return 1;
+    
+    return 1; // consumes all input events
 }
 
 
