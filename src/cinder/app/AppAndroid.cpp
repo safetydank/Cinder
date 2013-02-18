@@ -96,6 +96,88 @@ static void engine_draw_frame(struct engine* engine) {
     renderer.finishDraw();
 }
 
+
+
+
+/**
+ * Touch input handlers ///////////////////////////////////////////////////////////////////////////////////////
+ * replaces engine_update_touches()
+ */
+static void engine_update_active_touches( ci::app::AppAndroid& app, TouchState* touchState )
+{
+    vector<ci::app::TouchEvent::Touch> activeList;
+    
+    ActiveTouchMap& activeMap = touchState->activeTouches;
+    for (ActiveTouchMap::iterator it = activeMap.begin(); it != activeMap.end(); ++it) {
+        activeList.push_back(it->second);
+    }
+    app.privateSetActiveTouches__(activeList);
+}
+
+static void engine_update_touches_began( ci::app::AppAndroid& app, TouchState* touchState )
+{
+    if ( app.getSettings().isMultiTouchEnabled() ){
+        if ( ! touchState->touchesBegan.empty() ) {
+            app.privateTouchesBegan__( ci::app::TouchEvent( touchState->touchesBegan ) );
+            touchState->touchesBegan.clear();
+        }
+    } else {
+        if ( ! touchState->touchesBegan.empty() ) {
+            const float contentScale = 1.0f;
+            for (vector<TouchEvent::Touch>::iterator it = touchState->touchesBegan.begin(); it != touchState->touchesBegan.end(); ++it) {
+                ci::Vec2f pt = it->getPos();
+                int mods = 0;
+                mods |= cinder::app::MouseEvent::LEFT_DOWN;
+                app.privateMouseDown__( cinder::app::MouseEvent( cinder::app::MouseEvent::LEFT_DOWN, pt.x * contentScale, pt.y * contentScale, mods, 0.0f, 0 ) );
+            }
+            touchState->touchesBegan.clear();
+        }
+    }
+}
+
+static void engine_update_touches_moved( ci::app::AppAndroid& app, TouchState* touchState )
+{
+    if ( app.getSettings().isMultiTouchEnabled() ){
+        if ( ! touchState->touchesMoved.empty() ) {
+            app.privateTouchesMoved__( ci::app::TouchEvent( touchState->touchesMoved ) );
+            touchState->touchesMoved.clear();
+        }
+    } else {
+        if ( ! touchState->touchesMoved.empty() ) {
+            const float contentScale = 1.0f;
+            for (vector<TouchEvent::Touch>::iterator it = touchState->touchesMoved.begin(); it != touchState->touchesMoved.end(); ++it) {
+                ci::Vec2f pt = it->getPos();
+                int mods = 0;
+                mods |= cinder::app::MouseEvent::LEFT_DOWN;
+                app.privateMouseDrag__( cinder::app::MouseEvent( cinder::app::MouseEvent::LEFT_DOWN, pt.x * contentScale, pt.y * contentScale, mods, 0.0f, 0 ) );
+            }
+            touchState->touchesMoved.clear();
+        }
+    }
+}
+
+static void engine_update_touches_ended( ci::app::AppAndroid& app, TouchState* touchState )
+{
+    if ( app.getSettings().isMultiTouchEnabled() ){
+        if ( ! touchState->touchesEnded.empty() ) {
+            app.privateTouchesEnded__( ci::app::TouchEvent( touchState->touchesEnded ) );
+            touchState->touchesEnded.clear();
+        }
+    } else {
+        if ( ! touchState->touchesEnded.empty() ) {
+            const float contentScale = 1.0f;
+            for (vector<TouchEvent::Touch>::iterator it = touchState->touchesEnded.begin(); it != touchState->touchesEnded.end(); ++it) {
+                ci::Vec2f pt = it->getPos();
+                int mods = 0;
+                mods |= cinder::app::MouseEvent::LEFT_DOWN;
+                app.privateMouseUp__( cinder::app::MouseEvent( cinder::app::MouseEvent::LEFT_DOWN, pt.x * contentScale, pt.y * contentScale, mods, 0.0f, 0 ) );
+            }
+            touchState->touchesEnded.clear();
+        }
+    }
+}
+
+
 /**
  * Process the next input event.
  */
@@ -109,124 +191,88 @@ static int32_t engine_handle_input(struct android_app* app, AInputEvent* event) 
         "AMOTION_EVENT_ACTION_POINTER_DOWN",
         "AMOTION_EVENT_ACTION_POINTER_UP",
     };
-
+    
     struct engine* engine = (struct engine*)app->userData;
+    struct ci::app::AppAndroid& cinderApp = *(engine->cinderApp);
     struct TouchState* touchState = engine->touchState;
-
+    
     int32_t eventType = AInputEvent_getType(event);
-
+    
     if (eventType == AINPUT_EVENT_TYPE_MOTION) {
         int32_t actionCode = AMotionEvent_getAction(event);
         int action = actionCode & AMOTION_EVENT_ACTION_MASK;
         int index  = (actionCode & AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT;
         const char* actionName = (action >= 0 && action <= 6) ? actionNames[action] : "UNKNOWN";
-        // CI_LOGI("Received touch action %s pointer index %d", actionName, index);
-
+        CI_LOGI("Received touch action %s pointer index %i", actionName, index);
+        
         double timestamp = engine->cinderApp->getElapsedSeconds();
         if (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_POINTER_DOWN) {
+            int pointerCount = AMotionEvent_getPointerCount(event);
             int pointerId = AMotionEvent_getPointerId(event, index);
             float x = AMotionEvent_getX(event, index);
             float y = AMotionEvent_getY(event, index);
             TouchEvent::Touch touch(ci::Vec2f(x, y), ci::Vec2f(x, y), pointerId, timestamp, NULL);
-            touchState->touchesBegan.push_back(touch);
+            
+            touchState->activeTouches.erase(pointerId);
             touchState->activeTouches.insert(std::make_pair(pointerId, touch));
-
-            // CI_LOGI("Pointer id %d down x %f y %f", pointerId, x, y);
+            touchState->touchesBegan.push_back(touch);
+            CI_LOGI("Pointer id %d down x %f y %f", pointerId, x, y);
+            
+            engine_update_active_touches( cinderApp, engine->touchState );
+            engine_update_touches_began( cinderApp, engine->touchState );
+            
         }
         else if (action == AMOTION_EVENT_ACTION_MOVE) {
             int pointerCount = AMotionEvent_getPointerCount(event);
-
             for (int i=0; i < pointerCount; ++i) {
                 int pointerId = AMotionEvent_getPointerId(event, i);
                 float x = AMotionEvent_getX(event, i);
                 float y = AMotionEvent_getY(event, i);
                 map<int, TouchEvent::Touch>::iterator it = touchState->activeTouches.find(pointerId);
+                
                 if (it != touchState->activeTouches.end()) {
                     TouchEvent::Touch& prevTouch = it->second;
                     TouchEvent::Touch touch(ci::Vec2f(x, y), prevTouch.getPos(), pointerId, timestamp, NULL);
-                    touchState->touchesMoved.push_back(touch);
+                    
                     touchState->activeTouches.erase(pointerId);
                     touchState->activeTouches.insert(std::make_pair(pointerId, touch));
-                    // CI_LOGI("Pointer id %d move x %f y %f", pointerId, x, y);
+                    touchState->touchesMoved.push_back(touch);
+                    CI_LOGI("Pointer id %d move x %f y %f", pointerId, x, y);
                 }
             }
+            
+            engine_update_active_touches( cinderApp, engine->touchState );
+            engine_update_touches_moved( cinderApp, engine->touchState );
+            
         }
-        else if (action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_POINTER_UP) {
+        else if ( action == AMOTION_EVENT_ACTION_UP || action == AMOTION_EVENT_ACTION_POINTER_UP || action == AMOTION_EVENT_ACTION_CANCEL ) {
+            int pointerCount = AMotionEvent_getPointerCount(event);
             int pointerId = AMotionEvent_getPointerId(event, index);
             float x = AMotionEvent_getX(event, index);
             float y = AMotionEvent_getY(event, index);
-            touchState->touchesEnded.push_back(TouchEvent::Touch(ci::Vec2f(x, y), ci::Vec2f(x, y), pointerId, timestamp, NULL));
+            
             touchState->activeTouches.erase(pointerId);
-            // CI_LOGI("Pointer id %d up x %f y %f", pointerId, x, y);
+            touchState->touchesEnded.push_back(TouchEvent::Touch(ci::Vec2f(x, y), ci::Vec2f(x, y), pointerId, timestamp, NULL));
+            CI_LOGI("Pointer id %d up x %f y %f", pointerId, x, y);
+            
+            engine_update_active_touches( cinderApp, engine->touchState );
+            engine_update_touches_ended( cinderApp, engine->touchState );
+            
         }
-
+        
         return 1;
     }
     else if (eventType == AINPUT_EVENT_TYPE_KEY) {
         int32_t actionCode = AKeyEvent_getAction(event);
         int32_t keyCode = AKeyEvent_getKeyCode(event);
     }
-
-    return 0;
+    
+    return 1; // consumes all input events
 }
 
-static void engine_update_touches(ci::app::AppAndroid& app, TouchState* touchState) 
-{
-    if ( app.getSettings().isMultiTouchEnabled() ) {
-        if ( ! touchState->touchesBegan.empty() ) {
-            app.privateTouchesBegan__( ci::app::TouchEvent( touchState->touchesBegan ) );
-            touchState->touchesBegan.clear();
-        }
-        if ( ! touchState->touchesMoved.empty() ) {
-            app.privateTouchesMoved__( ci::app::TouchEvent( touchState->touchesMoved ) );
-            touchState->touchesMoved.clear();
-        }
-        if ( ! touchState->touchesEnded.empty() ) {
-            app.privateTouchesEnded__( ci::app::TouchEvent( touchState->touchesEnded ) );
-            touchState->touchesEnded.clear();
-        }
 
-        //  set active touches
-        vector<ci::app::TouchEvent::Touch> activeList;
-        ActiveTouchMap& activeMap = touchState->activeTouches;
-        for (ActiveTouchMap::iterator it = activeMap.begin(); it != activeMap.end(); ++it) {
-           activeList.push_back(it->second);
-        }
-        app.privateSetActiveTouches__(activeList);
-    }
-    else {
-        const float contentScale = 1.0f;
 
-        //  Mouse emulation if multi-touch is disabled
-        if ( ! touchState->touchesBegan.empty() ) {
-            for (vector<TouchEvent::Touch>::iterator it = touchState->touchesBegan.begin(); it != touchState->touchesBegan.end(); ++it) {
-                ci::Vec2f pt = it->getPos();
-                int mods = 0;
-                mods |= cinder::app::MouseEvent::LEFT_DOWN;
-                app.privateMouseDown__( cinder::app::MouseEvent( cinder::app::MouseEvent::LEFT_DOWN, pt.x * contentScale, pt.y * contentScale, mods, 0.0f, 0 ) );
-            }
-            touchState->touchesBegan.clear();
-        }
-        if ( ! touchState->touchesMoved.empty() ) {
-            for (vector<TouchEvent::Touch>::iterator it = touchState->touchesMoved.begin(); it != touchState->touchesMoved.end(); ++it) {
-                ci::Vec2f pt = it->getPos();
-                int mods = 0;
-                mods |= cinder::app::MouseEvent::LEFT_DOWN;
-                app.privateMouseDrag__( cinder::app::MouseEvent( cinder::app::MouseEvent::LEFT_DOWN, pt.x * contentScale, pt.y * contentScale, mods, 0.0f, 0 ) );
-            }
-            touchState->touchesMoved.clear();
-        }
-        if ( ! touchState->touchesEnded.empty() ) {
-            for (vector<TouchEvent::Touch>::iterator it = touchState->touchesEnded.begin(); it != touchState->touchesEnded.end(); ++it) {
-                ci::Vec2f pt = it->getPos();
-                int mods = 0;
-                mods |= cinder::app::MouseEvent::LEFT_DOWN;
-                app.privateMouseUp__( cinder::app::MouseEvent( cinder::app::MouseEvent::LEFT_DOWN, pt.x * contentScale, pt.y * contentScale, mods, 0.0f, 0 ) );
-            }
-            touchState->touchesEnded.clear();
-        }
-    }
-}
+
 
 inline void engine_enable_accelerometer(struct engine* engine)
 {
@@ -256,6 +302,7 @@ void log_engine_state(struct engine* engine) {
     };
     CI_LOGD("Engine activity state: %s", activityStates[engine->activityState]);
 }
+
 /**
  * Process the next main command.
  */
@@ -469,7 +516,7 @@ static void android_run(ci::app::AppAndroid* cinderApp, struct android_app* andr
         }
 
         //  Update engine touch state
-        engine_update_touches(*cinderApp, engine.touchState);
+        // engine_update_touches(*cinderApp, engine.touchState); //  <----------------------- not polling for this anymore (handling this via event)
 
         if (engine.animating) {
             // Drawing is throttled to the screen update rate, so there
