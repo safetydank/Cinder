@@ -26,6 +26,18 @@
 #include "cinder/Shape2d.h"
 #include "cinder/Exception.h"
 #include "cinder/DataSource.h"
+#if defined( CINDER_WINRT )
+#include <ft2build.h>
+
+// Note: generic is a reserved word in winrt c++/cx
+// need to redefine it for freetype.h
+#define generic GenericFromFreeTypeLibrary
+#include FT_FREETYPE_H
+#include FT_OUTLINE_H
+#undef generic
+
+#include FT_GLYPH_H
+#endif
 
 #include <string>
 #include <vector>
@@ -79,7 +91,15 @@ class Font
 	//! Returns a cinder::Shape2d representing the shape of the glyph at \a glyphIndex
 	virtual Shape2d					getGlyphShape( Glyph glyphIndex ) const = 0;
 	//! Returns the bounding box of a Glyph, relative to the baseline as the origin
+<<<<<<< HEAD
 	virtual Rectf					getGlyphBoundingBox( Glyph glyph ) const = 0;
+=======
+	Rectf					getGlyphBoundingBox( Glyph glyph ) const;
+
+#if defined( CINDER_WINRT )
+	FT_Face					getFace() const { return mObj->mFace; }
+#endif
+>>>>>>> upstream/dev
 	
 
 	static const std::vector<std::string>& getNames( bool forceRefresh = false );
@@ -100,6 +120,7 @@ class Font
 };
 
 #if defined( CINDER_COCOA )
+<<<<<<< HEAD
 class FontCoreText : public Font
 {
   public:
@@ -131,6 +152,24 @@ class FontCoreText : public Font
 };
 typedef std::shared_ptr<FontCoreText> FontCoreTextRef;
 #endif
+=======
+		CGFontRef				mCGFont;
+		const struct __CTFont*	mCTFont;
+#elif defined( CINDER_MSW )
+		::TEXTMETRIC					mTextMetric;
+		::LOGFONTW						mLogFont;
+		::HFONT							mHfont;
+		std::shared_ptr<Gdiplus::Font>	mGdiplusFont;
+		std::vector<std::pair<uint16_t,uint16_t> >	mUnicodeRanges;
+		void *mFileData;
+#elif defined( CINDER_WINRT )
+		std::vector<std::pair<uint16_t,uint16_t> >	mUnicodeRanges;
+		void *mFileData;
+		FT_Face mFace;
+#endif 		
+		size_t					mNumGlyphs;
+	};
+>>>>>>> upstream/dev
 
 #if defined( CINDER_MSW )
 class FontGdiPlus : public Font

@@ -161,6 +161,19 @@ class TextBox {
 
 	RendererRef getRenderer() const;
 	mutable RendererRef mRenderer;
+	mutable Vec2f	mCalculatedSize;
+#if defined( CINDER_COCOA )
+	void			createLines() const;
+
+	mutable std::vector<std::pair<std::shared_ptr<const __CTLine>,Vec2f> >	mLines;
+#elif defined( CINDER_MSW )
+	std::vector<std::string>	calculateLineBreaks() const;
+	void						calculate() const;
+
+	mutable std::wstring	mWideText;
+#elif defined( CINDER_WINRT )
+	std::vector<std::string>	calculateLineBreaks() const;
+#endif
 };
 
 /** \brief Renders a single string and returns it as a Surface.

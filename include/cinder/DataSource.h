@@ -2,6 +2,8 @@
  Copyright (c) 2010, The Barbarian Group
  All rights reserved.
 
+ Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that
  the following conditions are met:
 
@@ -89,6 +91,7 @@ class DataSourcePath : public DataSource {
 
 DataSourceRef	loadFile( const fs::path &path );
 
+<<<<<<< HEAD
 #if defined( CINDER_ANDROID )
 
 typedef std::shared_ptr<class DataSourceAsset>	DataSourceAssetRef;
@@ -115,8 +118,7 @@ DataSourceAssetRef	loadAsset( AAssetManager *mgr, const std::string &path );
 
 #endif
 
-//  Temporarily disabled on Android
-#if ! defined( CINDER_ANDROID )
+#if !defined( CINDER_WINRT ) && !defined( CINDER_ANDROID )
 typedef std::shared_ptr<class DataSourceUrl>	DataSourceUrlRef;
 
 class DataSourceUrl : public DataSource {
@@ -138,10 +140,10 @@ class DataSourceUrl : public DataSource {
 	UrlOptions		mOptions;
 	IStreamUrlRef	mStream;
 };
+#endif // if !defined( CINDER_WINRT ) && !defined( CINDER_ANDROID )
 
 DataSourceRef			loadUrl( const Url &Url, const UrlOptions &options = UrlOptions() );
 inline DataSourceRef	loadUrl( const std::string &urlString, const UrlOptions &options = UrlOptions() ) { return loadUrl( Url( urlString ), options ); }
-#endif // ! defined( CINDER_ANDROID )
 
 typedef std::shared_ptr<class DataSourceBuffer>	DataSourceBufferRef;
 

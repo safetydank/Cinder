@@ -30,7 +30,13 @@
 	#include <objc/objc-auto.h>
 #endif
 
-#if (defined( _MSC_VER ) && ( _MSC_VER >= 1700 )) || ( defined( _LIBCPP_VERSION ) && ! defined( CINDER_ANDROID ) )
+#if defined( CINDER_WINRT )
+	#include <thread>
+	#include <mutex>
+	#include <condition_variable>
+	#include <future>
+
+#elif (defined( _MSC_VER ) && ( _MSC_VER >= 1700 )) || ( defined( _LIBCPP_VERSION ) && ! defined( CINDER_ANDROID ) )
 	#include <thread>
 	#include <mutex>
 	#include <condition_variable>

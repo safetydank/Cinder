@@ -2,6 +2,8 @@
  Copyright (c) 2012, The Cinder Project
  All rights reserved.
  
+ Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+
  This code is designed for use with the Cinder C++ library, http://libcinder.org
 
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that
@@ -666,13 +668,8 @@ void JsonTree::write( DataTargetRef target, JsonTree::WriteOptions writeOptions 
 
 		// This routine serializes JsonCpp data and formats it
 		if( writeOptions.getIndented() ) {
-			Json::StyledWriter writer;
-			jsonString = writer.write( value.toStyledString() );
-			boost::replace_all( jsonString, "\\n", "\r\n" );
-			boost::replace_all( jsonString, "\\\"", "\"" );
-			if( jsonString.length() >= 3 ) {
-				jsonString = jsonString.substr( 1, boost::trim_copy( jsonString ).length() - 2 );
-			}
+			jsonString = value.toStyledString();
+			boost::replace_all( jsonString, "\n", "\r\n" );
 		} else {
 			Json::FastWriter writer;
 			jsonString = writer.write( value );
@@ -695,17 +692,29 @@ void JsonTree::write( DataTargetRef target, JsonTree::WriteOptions writeOptions 
 
 JsonTree::ExcChildNotFound::ExcChildNotFound( const JsonTree &node, const string &childPath ) throw()
 {
+#if (defined (CINDER_MSW ) || defined( CINDER_WINRT ))
+	sprintf_s( mMessage, "Could not find child: %s for node: %s", childPath.c_str(), node.getPath().c_str() );
+#else
 	sprintf( mMessage, "Could not find child: %s for node: %s", childPath.c_str(), node.getPath().c_str() );
+#endif
 }
 
 JsonTree::ExcNonConvertible::ExcNonConvertible( const JsonTree &node ) throw()
 {
+#if (defined (CINDER_MSW ) || defined( CINDER_WINRT ))
+	sprintf_s( mMessage, "Unable to convert value for node: %s", node.getPath().c_str() );
+#else
 	sprintf( mMessage, "Unable to convert value for node: %s", node.getPath().c_str() );
+#endif
 }
 
 JsonTree::ExcJsonParserError::ExcJsonParserError( const string &errorMessage ) throw()
 {
+#if (defined (CINDER_MSW ) || defined( CINDER_WINRT ))
+	sprintf_s( mMessage, "Unable to parse JSON\n: %s", errorMessage.c_str() );
+#else
 	sprintf( mMessage, "Unable to parse JSON\n: %s", errorMessage.c_str() );
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,8 @@ xcuserdata/
 build/
 lib/libcinder*.a
 lib/cinder*.lib
+lib/cinder*.idb
+lib/cinder*.pdb
 
 # Windows cruft
 *.suo
@@ -44,3 +46,6 @@ project.properties
 proguard.cfg
 proguard-project.txt
 
+# doxygen generated files
+docs/html
+docs/doxygen/cinder.tag

@@ -2,6 +2,8 @@
  Copyright (c) 2010, The Barbarian Group
  All rights reserved.
 
+ Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
+
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that
  the following conditions are met:
 
@@ -50,6 +52,15 @@
 		void cpuidwrap( int *p, unsigned int param );
 	}
 #elif defined( CINDER_ANDROID )
+#elif defined( CINDER_WINRT)
+	#include <collection.h>
+	#include "cinder/WinRTUtils.h"
+	using namespace Windows::Devices::Input;
+	using namespace Windows::Foundation::Collections;
+	using namespace Windows::ApplicationModel;
+	using namespace Windows::Networking;
+	using namespace Windows::Networking::Connectivity;
+	using namespace cinder::winrt;
 #endif
 
 #include <string>
@@ -73,7 +84,7 @@ System::System()
 	for( size_t b = 0; b < TOTAL_CACHE_TYPES; ++b )
 		mCachedValues[b] = false;
 		
-#if defined( CINDER_MSW )
+#if defined( CINDER_MSW ) && ! defined( _WIN64 )
 	int p[4];
 	cpuidwrap( p, 1 );
 	mCPUID_EBX = p[1];
@@ -120,7 +131,7 @@ static T getSysCtlValue( const std::string &key )
 }
 #endif
 
-#if defined( CINDER_MSW )
+#if defined( CINDER_MSW ) && ! defined( _WIN64 )
 typedef struct _LOGICALPROCESSORDATA
 {
    unsigned int nLargestStandardFunctionNumber;
@@ -251,15 +262,21 @@ void cpuid( int whichlp, PLOGICALPROCESSORDATA p )
    p->nCoreId = p->nLocalApicId & mask;
 }
 
-#endif
+#endif // defined( CINDER_MSW ) && ! defined( _WIN64 )
 
 bool System::hasSse2()
 {
 	if( ! instance()->mCachedValues[HAS_SSE2] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mHasSSE2 = ( getSysCtlValue<int>( "hw.optional.sse2" ) == 1 );
+#elif defined( _WIN64 )
+		instance()->mHasSSE2 = true;
 #elif defined( CINDER_MSW )
 		instance()->mHasSSE2 = ( instance()->mCPUID_EDX & 0x04000000 ) != 0;
+#elif defined( CINDER_WINRT )
+		instance()->mHasSSE2 = IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE) != 0;
+#else
+	throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[HAS_SSE2] = true;
 	}
@@ -272,8 +289,14 @@ bool System::hasSse3()
 	if( ! instance()->mCachedValues[HAS_SSE3] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mHasSSE3 = ( getSysCtlValue<int>( "hw.optional.sse3" ) == 1 );
+#elif defined( _WIN64 )
+		instance()->mHasSSE3 = true;
 #elif defined( CINDER_MSW )
 		instance()->mHasSSE3 = ( instance()->mCPUID_ECX & 0x00000001 ) != 0;
+#elif defined( CINDER_WINRT )
+		instance()->mHasSSE3 = IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE) != 0;
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[HAS_SSE3] = true;
 	}
@@ -286,8 +309,12 @@ bool System::hasSse4_1()
 	if( ! instance()->mCachedValues[HAS_SSE4_1] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mHasSSE4_1 = ( getSysCtlValue<int>( "hw.optional.sse4_1" ) == 1 );
+#elif defined( _WIN64 )
+		instance()->mHasSSE4_1 = true; // TODO: this is not being tested
 #elif defined( CINDER_MSW )
 		instance()->mHasSSE4_1 = ( instance()->mCPUID_ECX & ( 1 << 19 ) ) != 0;
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[HAS_SSE4_1] = true;
 	}
@@ -300,13 +327,34 @@ bool System::hasSse4_2()
 	if( ! instance()->mCachedValues[HAS_SSE4_2] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mHasSSE4_2 = ( getSysCtlValue<int>( "hw.optional.sse4_2" ) == 1 );
+#elif defined( _WIN64 )
+		instance()->mHasSSE4_2 = true; // TODO: this is not being tested
 #elif defined( CINDER_MSW )
 		instance()->mHasSSE4_2 = ( instance()->mCPUID_ECX & ( 1 << 20 ) ) != 0;
-#endif
+#else
+		throw std::exception( "Not implemented" );
+#endif		
 		instance()->mCachedValues[HAS_SSE4_2] = true;
 	}
 	
 	return instance()->mHasSSE4_2;
+}
+
+bool System::hasArm()
+{
+	if( ! instance()->mCachedValues[HAS_ARM] ) {
+#if defined( CINDER_WINRT )	
+		SYSTEM_INFO info;
+		::GetNativeSystemInfo(&info);
+		instance()->mHasArm = info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM;
+#elif defined( CINDER_COCOA_TOUCH )
+		instance()->mHasArm = true;
+#else
+		instance()->mHasArm = false;
+#endif
+		instance()->mCachedValues[HAS_ARM] = true;
+	}
+	return instance()->mHasArm;
 }
 
 bool System::hasX86_64()
@@ -314,9 +362,18 @@ bool System::hasX86_64()
 	if( ! instance()->mCachedValues[HAS_X86_64] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mHasX86_64 = ( getSysCtlValue<int>( "hw.optional.x86_64" ) == 1 );
+#elif defined( _WIN64 )
+		instance()->mHasX86_64 = true;
 #elif defined( CINDER_MSW )
 		instance()->mHasX86_64 = ( instance()->mCPUID_EDX & ( 1 << 29 ) ) != 0;
-#endif
+#elif defined( CINDER_WINRT )
+		SYSTEM_INFO info;
+		::GetNativeSystemInfo(&info);
+		instance()->mHasX86_64 = info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64;
+#else
+		throw std::exception( "Not implemented" );
+#endif		
+
 		instance()->mCachedValues[HAS_X86_64] = true;
 	}
 	
@@ -328,6 +385,10 @@ int System::getNumCpus()
 	if( ! instance()->mCachedValues[PHYSICAL_CPUS] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mPhysicalCPUs = getSysCtlValue<int>( "hw.packages" );
+#elif defined( CINDER_WINRT ) || defined( _WIN64 )
+		SYSTEM_INFO info;
+		::GetNativeSystemInfo(&info);
+		instance()->mPhysicalCPUs = info.dwNumberOfProcessors;
 #elif defined( CINDER_MSW )
 		const int MAX_NUMBER_OF_LOGICAL_PROCESSORS = 96;
 		const int MAX_NUMBER_OF_PHYSICAL_PROCESSORS = 8;
@@ -356,7 +417,10 @@ int System::getNumCpus()
 		
 		// unlock from a particular logical processor
 		::SetProcessAffinityMask( GetCurrentProcess(), processAffinityMask );
-#endif
+#else
+		throw std::exception( "Not implemented" );
+#endif		
+
 		instance()->mCachedValues[PHYSICAL_CPUS] = true;
 	}
 	
@@ -368,10 +432,17 @@ int System::getNumCores()
 	if( ! instance()->mCachedValues[LOGICAL_CPUS] ) {
 #if defined( CINDER_COCOA )	
 		instance()->mLogicalCPUs = getSysCtlValue<int>( "hw.logicalcpu" );
+#elif defined( CINDER_WINRT ) || defined( _WIN64 )
+		SYSTEM_INFO info;
+		::GetNativeSystemInfo(&info);
+		// no way to check the actual number of cores, so return dwNumberOfProcessors
+		instance()->mLogicalCPUs = info.dwNumberOfProcessors;
 #elif defined( CINDER_MSW )
 		::SYSTEM_INFO sys;
 		::GetSystemInfo( &sys );
 		instance()->mLogicalCPUs = sys.dwNumberOfProcessors;
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[LOGICAL_CPUS] = true;
 	}
@@ -394,6 +465,8 @@ int System::getOsMajorVersion()
 		info.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
 		::GetVersionEx( (OSVERSIONINFO *)&info );
 		instance()->mOSMajorVersion = info.dwMajorVersion;
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[OS_MAJOR] = true;
 	}
@@ -416,6 +489,8 @@ int System::getOsMinorVersion()
 		info.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
 		::GetVersionEx( reinterpret_cast<LPOSVERSIONINFO>( &info ) );
 		instance()->mOSMinorVersion = info.dwMinorVersion;
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[OS_MINOR] = true;
 	}
@@ -435,12 +510,14 @@ int System::getOsBugFixVersion()
 #elif defined( CINDER_COCOA )	
 		if( Gestalt(gestaltSystemVersionBugFix, reinterpret_cast<SInt32*>( &(instance()->mOSBugFixVersion) ) ) != noErr)
 			throw SystemExcFailedQuery();
-#elif defined( CINDER_MSW )
+#elif defined( CINDER_MSW )	
 		::OSVERSIONINFOEX info;
 		::ZeroMemory( &info, sizeof( OSVERSIONINFOEX ) );
 		info.dwOSVersionInfoSize = sizeof( OSVERSIONINFOEX );
 		::GetVersionEx( reinterpret_cast<LPOSVERSIONINFO>( &info ) );
 		instance()->mOSBugFixVersion = info.wServicePackMajor;
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[OS_BUGFIX] = true;
 	}
@@ -466,6 +543,15 @@ bool System::hasMultiTouch()
 #elif defined( CINDER_ANDROID )
 	//  XXX check for multitouch support
 	instance()->mHasMultiTouch = true;
+#elif defined( CINDER_WINRT )
+		auto pointerDevices = PointerDevice::GetPointerDevices();
+		std::for_each(begin(pointerDevices), end(pointerDevices), [&](PointerDevice^ p) {
+			if(p->PointerDeviceType == PointerDeviceType::Touch) {
+				instance()->mHasMultiTouch  = true;
+			}
+		});
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[MULTI_TOUCH] = true;
 	}
@@ -485,6 +571,18 @@ int32_t System::getMaxMultiTouchPoints()
 #elif defined( CINDER_ANDROID )
 		// XXX can this be queried?
 		instance()->mMaxMultiTouchPoints = 2;
+#elif defined( CINDER_WINRT )
+		auto pointerDevices = PointerDevice::GetPointerDevices();
+		unsigned int maxContacts = 0;
+		std::for_each(begin(pointerDevices), end(pointerDevices), [&](PointerDevice^ p) {
+			if(p->MaxContacts > maxContacts) {
+				maxContacts  = p->MaxContacts;
+			}
+		});
+		instance()->mMaxMultiTouchPoints = maxContacts;
+
+#else
+		throw std::exception( "Not implemented" );
 #endif
 		instance()->mCachedValues[MAX_MULTI_TOUCH_POINTS] = true;
 	}
@@ -547,12 +645,41 @@ vector<System::NetworkAdapter> System::getNetworkAdapters()
 
     if( pAdapterInfo )
         ::HeapFree( ::GetProcessHeap(), 0, pAdapterInfo );
-#endif // defined( CINDER_MSW )
+#elif defined( CINDER_WINRT )
+	auto hosts = NetworkInformation::GetHostNames();
+	std::for_each(begin(hosts), end(hosts), [&](HostName^ n) {
+		adapters.push_back( System::NetworkAdapter( PlatformStringToString(n->CanonicalName), PlatformStringToString(n->DisplayName) ) );
+	});
+#else
+		throw std::exception( "Not implemented" );
+#endif
 
 	return adapters;
 
 }
 
+#if defined( CINDER_WINRT )
+std::string System::getIpAddress()
+{
+    auto icp = NetworkInformation::GetInternetConnectionProfile();
+	std::string ip("");
+	if (icp != nullptr && icp->NetworkAdapter != nullptr)
+    {
+		auto hosts = NetworkInformation::GetHostNames();
+		std::for_each(begin(hosts), end(hosts), [&](HostName^ n) {
+			if(n->IPInformation && n->IPInformation->NetworkAdapter)
+			{
+				if(n->IPInformation->NetworkAdapter->NetworkAdapterId == icp->NetworkAdapter->NetworkAdapterId) {
+					ip = PlatformStringToString(n->DisplayName);
+				}
+				//OutputDebugString(std::wstring(n->DisplayName->Data()).c_str());
+			}
+		});
+    }
+
+    return ip;
+}
+#else
 std::string System::getIpAddress()
 {
 	vector<System::NetworkAdapter> adapters = getNetworkAdapters();
@@ -572,6 +699,9 @@ std::string System::getIpAddress()
 	
 	return result;
 }
+#endif
+
+
 
 #if defined( CINDER_COCOA_TOUCH )
 bool System::isDeviceIphone()
